@@ -9,6 +9,5 @@ namespace Entity
     {
         public string Name { get; set; } = null!;
         public string? Description { get; set; }
-        public ICollection<MovieCategory> LinkedMovieCategories { get; set; } = new List<MovieCategory>();
     }
 }
