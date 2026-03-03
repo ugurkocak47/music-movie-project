@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Dto.AppUsers
+namespace DTO.AppUsers
 {
     public class RegisterUserDto
     {

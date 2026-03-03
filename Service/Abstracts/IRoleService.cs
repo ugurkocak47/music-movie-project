@@ -5,7 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Dto.AppRoles;
+using DTO.AppRoles;
+
 
 
 namespace Service.Abstracts

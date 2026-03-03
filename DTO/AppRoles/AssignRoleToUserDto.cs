@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Dto.AppRoles
+namespace DTO.AppRoles
 {
     public class AssignRoleToUserDto
     {

@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+﻿﻿using AutoMapper;
 using Core.Utilities.Results;
 using Entity;
 using Microsoft.AspNetCore.Http;
@@ -13,7 +13,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
-using Dto.AppUsers;
+using DTO.AppUsers;
 
 namespace Service.Concretes
 {

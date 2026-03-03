@@ -7,15 +7,28 @@ using DTO.AutoMapper.Musics;
 using DTO.ValidationRules;
 using Entity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Service;
 using Service.Abstracts;
 using Service.Concretes;
 
-namespace AspNetCoreIdentityApp.Web.Extensions
+namespace WebAPI.Extensions
 {
     public static class StartupExtension
     {
-        public static void AddIdentityWithExt(this IServiceCollection services)
+
+        public static void AddDbContextWithExtension(this IServiceCollection services,string connectionString)
+        {
+            services.AddDbContext<AppDbContext>(options =>
+                options
+                    .EnableSensitiveDataLogging()
+                    .EnableDetailedErrors()
+                    .UseSqlServer(connectionString, t => t.MigrationsAssembly("WebAPI"))
+        
+            );
+        }
+        
+        public static void AddIdentityWithExtension(this IServiceCollection services)
         {
 
             services.Configure<DataProtectionTokenProviderOptions>(opt => opt.TokenLifespan = TimeSpan.FromHours(2));
@@ -42,15 +55,16 @@ namespace AspNetCoreIdentityApp.Web.Extensions
 
         public static void AddServicesWithExtensions(this IServiceCollection services)
         {
+            
+
             services.AddAutoMapper(
                 typeof(Program),
-                typeof(MusicCategoryProfile),
-                typeof(MusicProfile),
-                typeof(MovieProfile),
                 typeof(MovieCategoryProfile),
-                typeof(UserProfile),
-                typeof(RoleProfile)
+                typeof(MovieProfile),
+                typeof(MusicProfile),
+                typeof(MusicCategoryProfile)
             );
+            
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IMusicCategoryService, MusicCategoryService>();
             services.AddScoped<IEmailService, EmailService>();

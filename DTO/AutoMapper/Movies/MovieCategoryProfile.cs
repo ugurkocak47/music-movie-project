@@ -1,4 +1,5 @@
 using AutoMapper;
+using DTO.MovieCategories;
 using DTO.MusicCategories;
 using Entity;
 
@@ -8,8 +9,8 @@ public class MovieCategoryProfile:Profile
 {
     public MovieCategoryProfile()
     {
-        CreateMap<CreateMusicCategoryDto, MovieCategory>().ReverseMap();
-        CreateMap<UpdateMusicCategoryDto, MovieCategory>().ReverseMap();
-        CreateMap<GetMusicCategoryDto, MovieCategory>().ReverseMap();
+        CreateMap<CreateMovieCategoryDto, MovieCategory>().ReverseMap();
+        CreateMap<UpdateMovieCategoryDto, MovieCategory>().ReverseMap();
+        CreateMap<GetMovieCategoryDto, MovieCategory>().ReverseMap();
     }
 }

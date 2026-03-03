@@ -1,11 +1,12 @@
 ﻿using AutoMapper;
-using Dto.AppRoles;
+
 using Entity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using DTO.AppRoles;
 
 namespace DTO.AutoMapper.AppRoles
 {
