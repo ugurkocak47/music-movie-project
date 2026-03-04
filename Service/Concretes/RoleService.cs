@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+﻿﻿﻿﻿using AutoMapper;
 using Core.Utilities.Results;
 using Entity;
 using Microsoft.AspNetCore.Http;
@@ -58,9 +58,9 @@ namespace Service.Concretes
 
             return new SuccessDataResult<List<AssignRoleToUserDto>>(roleDtoList);
         }
-        public async Task<IResult> AssignRoleToUserAsync(string userId, List<AssignRoleToUserDto> roleDto)
+        public async Task<IResult> AssignRoleToUserAsync(Guid userId, List<AssignRoleToUserDto> roleDto)
         {
-            var userToAssign = await _userManager.FindByIdAsync(userId);
+            var userToAssign = await _userManager.FindByIdAsync(userId.ToString());
             if (userToAssign == null)
             {
                 return new ErrorResult("Kullanıcı bulunamadı!");
@@ -90,7 +90,7 @@ namespace Service.Concretes
 
             }
             var currentUser = await _userManager.FindByNameAsync(_httpContextAccessor.HttpContext?.User.Identity!.Name!);
-            if (userId == currentUser!.Id.ToString() )
+            if (userId.ToString() == currentUser!.Id.ToString() )
             {
                 await _signInManager.RefreshSignInAsync(userToAssign);
             }
@@ -102,7 +102,7 @@ namespace Service.Concretes
         {
             var role = _mapper.Map<AppRole>(roleDto);
             var result = await _roleManager.CreateAsync(role);
-            if (result.Succeeded)
+            if (!result.Succeeded)
             {
                 var errors = result.Errors.Select(x => x.Description).ToList();
                 return new ErrorResult(errors);
@@ -128,23 +128,22 @@ namespace Service.Concretes
             return new SuccessResult();
         }
 
-        public Task<List<ListRoleDto>> GetAllRolesAsync()
+        public async Task<IDataResult<List<ListRoleDto>>> GetAllRolesAsync()
         {
-            var roles = _roleManager.Roles.ToList();
+            var roles = await _roleManager.Roles.ToListAsync();
             var rolesMap = _mapper.Map<List<ListRoleDto>>(roles);
-            return Task.FromResult(rolesMap);
+            return new SuccessDataResult<List<ListRoleDto>>(rolesMap);
         }
 
         public async Task<IResult> UpdateRoleAsync(UpdateRoleDto roleDto)
         {
-            var roleToUpdate = await _roleManager.FindByIdAsync(roleDto.Id);
-
+            var roleToUpdate = await _roleManager.FindByIdAsync(roleDto.Id.ToString());
 
             if (roleToUpdate == null)
             {
                 return new ErrorResult("Rol bulunamadı!");
-
             }
+            
             roleToUpdate.Name = roleDto.Name;
 
             var result = await _roleManager.UpdateAsync(roleToUpdate);
@@ -163,8 +162,8 @@ namespace Service.Concretes
             if (roleToUpdate == null)
             {
                 return new ErrorDataResult<UpdateRoleDto>("Rol bulunamadı!");
-
             }
+            
             var roleMap = _mapper.Map<UpdateRoleDto>(roleToUpdate);
             return new SuccessDataResult<UpdateRoleDto>(roleMap);
         }

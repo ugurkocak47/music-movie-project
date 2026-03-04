@@ -1,4 +1,4 @@
-﻿using System;
+﻿﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -9,7 +9,7 @@ namespace DTO.AppRoles
 {
     public class UpdateRoleDto
     {
-        public string Id { get; set; } = null!;
+        public Guid Id { get; set; }
 
         [Required(ErrorMessage = "Rol adı boş bırakılamaz.")]
         [Display(Name = "Rol adı: ")]
