@@ -4,6 +4,7 @@ using DTO.AutoMapper.AppRoles;
 using DTO.AutoMapper.AppUsers;
 using DTO.AutoMapper.Movies;
 using DTO.AutoMapper.Musics;
+using DTO.AutoMapper.Playlists;
 using DTO.ValidationRules;
 using Entity;
 using Microsoft.AspNetCore.Identity;
@@ -62,7 +63,8 @@ namespace WebAPI.Extensions
                 typeof(MovieCategoryProfile),
                 typeof(MovieProfile),
                 typeof(MusicProfile),
-                typeof(MusicCategoryProfile)
+                typeof(MusicCategoryProfile),
+                typeof(PlaylistProfile)
             );
             
             services.AddScoped<IRoleService, RoleService>();
@@ -70,6 +72,7 @@ namespace WebAPI.Extensions
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IMusicService,MusicService>();
+            services.AddScoped<IPlaylistService, PlaylistService>();
             services.AddScoped<IMovieService,MovieService>();
             services.AddScoped<IMovieCategoryService, MovieCategoryService>();
             services.AddScoped(typeof(ITBaseService<,,,>), typeof(TBaseService<,,,>));

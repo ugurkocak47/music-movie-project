@@ -37,8 +37,9 @@ public class MovieCategoryService:IMovieCategoryService
             return new ErrorResult($"Movie category with ID {movieCategoryDto.Id} not found.");
         }
 
-        var categoryMap = _mapper.Map<MovieCategory>(movieCategoryDto);
-        await Current.UpdateAsync(categoryMap);
+        // Map DTO properties onto the existing tracked entity
+        _mapper.Map(movieCategoryDto, category);
+        await Current.UpdateAsync(category);
         return new SuccessResult("Movie category updated successfully.");
     }
 

@@ -37,8 +37,9 @@ public class MovieService:IMovieService
             return new ErrorResult($"Movie with ID {movieDto.Id} not found.");
         }
 
-        var movieMap = _mapper.Map<Movie>(movieDto);
-        await Current.UpdateAsync(movieMap);
+        // Map DTO properties onto the existing tracked entity
+        _mapper.Map(movieDto, movie);
+        await Current.UpdateAsync(movie);
         return new SuccessResult("Movie updated successfully.");
     }
 

@@ -1,4 +1,4 @@
-﻿using System.Linq.Expressions;
+﻿﻿﻿using System.Linq.Expressions;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -62,35 +62,39 @@ namespace Core.Service
                 throw new UnauthorizedAccessException("Bu işlemi yapabilmek için giriş yapmanız gerekiyor.");
             }
             var userId = _userManager.GetUserId(user);
+            
+            // Set audit fields
             entity.UpdatedDate = DateTime.Now;
             entity.UpdatedBy = Guid.Parse(userId!);
-            var existingEntity = await _dbSet.FindAsync(entity.Id);
-
-            if (existingEntity != null)
+            
+            // Attach the entity if it's not already tracked
+            var entry = _context.Entry(entity);
+            if (entry.State == EntityState.Detached)
             {
-                foreach (var property in typeof(T).GetProperties())
-                {
-                    var newValue = property.GetValue(entity);
-                    if (newValue != null)
-                    {
-                        property.SetValue(existingEntity, newValue);
-                    }
-                }
+                _dbSet.Attach(entity);
+                entry.State = EntityState.Modified;
             }
-            else
-            {
-                _context.Entry(entity).State = EntityState.Modified;
-            }
+            
+            // Protect audit fields from being overwritten
+            entry.Property(e => e.CreatedDate).IsModified = false;
+            entry.Property(e => e.CreatedBy).IsModified = false;
+            entry.Property(e => e.IsDeleted).IsModified = false;
+            entry.Property(e => e.DeletedDate).IsModified = false;
 
             try
             {
                 await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Entity was modified or deleted by another user
+                return false;
             }
             catch (Exception)
             {
                 return false;
             }
-            return true;
         }
 
         public async Task<bool> DeleteAsync(T entity)
@@ -163,14 +167,38 @@ namespace Core.Service
                 var userId = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
                 entity.UpdatedBy = Guid.Parse(userId);
             }
+            
+            // Set audit fields
             entity.UpdatedDate = DateTime.Now;
-            _dbSet.Update(entity);
-            try {
+            
+            // Attach the entity if it's not already tracked
+            var entry = _context.Entry(entity);
+            if (entry.State == EntityState.Detached)
+            {
+                _dbSet.Attach(entity);
+                entry.State = EntityState.Modified;
+            }
+            
+            // Protect audit fields from being overwritten
+            entry.Property(e => e.CreatedDate).IsModified = false;
+            entry.Property(e => e.CreatedBy).IsModified = false;
+            entry.Property(e => e.IsDeleted).IsModified = false;
+            entry.Property(e => e.DeletedDate).IsModified = false;
+            
+            try
+            {
                 _context.SaveChanges();
-            } catch (Exception ex) {
+                return true;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Entity was modified or deleted by another user
                 return false;
             }
-            return true;
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         public bool Delete(T entity)

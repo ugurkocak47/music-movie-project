@@ -37,8 +37,9 @@ public class MusicCategoryService:IMusicCategoryService
             return new ErrorResult($"Music category with ID {musicCategoryDto.Id} not found.");
         }
 
-        var categoryMap = _mapper.Map<MusicCategory>(musicCategoryDto);
-        await Current.UpdateAsync(categoryMap);
+        // Map DTO properties onto the existing tracked entity
+        _mapper.Map(musicCategoryDto, category);
+        await Current.UpdateAsync(category);
         return new SuccessResult("Music category updated successfully.");
     }
 

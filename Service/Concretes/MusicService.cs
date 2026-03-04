@@ -37,8 +37,9 @@ public class MusicService:IMusicService
             return new ErrorResult($"Music with ID {musicDto.Id} not found.");
         }
 
-        var musicMap = _mapper.Map<Music>(musicDto);
-        await Current.UpdateAsync(musicMap);
+        // Map DTO properties onto the existing tracked entity
+        _mapper.Map(musicDto, music);
+        await Current.UpdateAsync(music);
         return new SuccessResult("Music updated successfully.");
     }
 
