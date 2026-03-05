@@ -1,4 +1,4 @@
-﻿using DTO.AppUsers;
+﻿﻿using DTO.AppUsers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service.Abstracts;
@@ -23,9 +23,9 @@ namespace WebAPI.Controllers
             var result = await _userService.RegisterAsync(userDto);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
         [HttpPost("login")]
@@ -34,9 +34,9 @@ namespace WebAPI.Controllers
             var result = await _userService.LoginAsync(userDto);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
         [HttpPut("updateuser")]
@@ -45,9 +45,9 @@ namespace WebAPI.Controllers
             var result = await _userService.EditUserInformationAsync(userDto);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
         [HttpPut("changepassword")]
@@ -56,9 +56,9 @@ namespace WebAPI.Controllers
             var result = await _userService.ChangePasswordAsync(changePasswordDto);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
         [HttpGet("logout")]
@@ -67,9 +67,9 @@ namespace WebAPI.Controllers
             var result = await _userService.LogOutAsync();
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
 
@@ -79,9 +79,9 @@ namespace WebAPI.Controllers
             var result = await _userService.SendPasswordResetLinkAsync(userDto);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
         [HttpPost("resetpassword")]
@@ -90,9 +90,9 @@ namespace WebAPI.Controllers
             var result = await _userService.ResetUserPasswordAsync(userDto, userId, token);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
         [HttpGet("getallusers")]
@@ -101,9 +101,9 @@ namespace WebAPI.Controllers
             var result = await _userService.GetAllUsersAsync();
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages, data = (object?)null });
             }
-            return Ok(result.Data);
+            return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
         }
     }
 }

@@ -22,10 +22,10 @@ namespace WebAPI.Controllers
             var result = await _roleService.CreateRoleAsync(roleDto);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
 
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
         [HttpPut("updaterole")]
@@ -34,10 +34,10 @@ namespace WebAPI.Controllers
             var result = await _roleService.UpdateRoleAsync(roleDto);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
 
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
         [HttpGet("getuserroles/{id}")]
@@ -46,10 +46,10 @@ namespace WebAPI.Controllers
             var result = await _roleService.GetUserRolesAsync(id);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages, data = (object?)null });
             }
 
-            return Ok(result);
+            return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
         }
 
         [HttpPost("assignrole/{id}")]
@@ -58,10 +58,10 @@ namespace WebAPI.Controllers
             var result = await _roleService.AssignRoleToUserAsync(id, roleDto);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
 
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
         [HttpGet]
@@ -70,10 +70,10 @@ namespace WebAPI.Controllers
             var result = await _roleService.GetAllRolesAsync();
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages, data = (object?)null });
             }
 
-            return Ok(result);
+            return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
         }
 
         [HttpGet("{id}")]
@@ -82,10 +82,10 @@ namespace WebAPI.Controllers
             var result = await _roleService.GetCurrentRoleToUpdateAsync(id);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages, data = (object?)null });
             }
 
-            return Ok(result);
+            return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
         }
 
         [HttpDelete("{id}")]
@@ -94,10 +94,10 @@ namespace WebAPI.Controllers
             var result = await _roleService.DeleteRoleAsync(id);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
 
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
         
     }

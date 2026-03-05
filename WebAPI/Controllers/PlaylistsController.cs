@@ -22,10 +22,10 @@ namespace WebAPI.Controllers
             var result = await _playlistService.CreatePlaylistAsync(playlistDto);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
 
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
         [HttpPut]
@@ -34,10 +34,10 @@ namespace WebAPI.Controllers
             var result = await _playlistService.UpdatePlaylistAsync(playlistDto);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
 
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
         [HttpDelete("{id}")]
@@ -46,10 +46,10 @@ namespace WebAPI.Controllers
             var result = await _playlistService.DeletePlaylistAsync(id);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
 
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
         [HttpGet]
@@ -58,10 +58,10 @@ namespace WebAPI.Controllers
             var result = await _playlistService.GetAllPlaylistsAsync(getPrivate);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages, data = (object?)null });
             }
 
-            return Ok(result);
+            return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
         }
 
         [HttpGet("getbyuser/{id}")]
@@ -70,10 +70,10 @@ namespace WebAPI.Controllers
             var result = await _playlistService.GetPlaylistsByUserId(userId, getPrivate);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages, data = (object?)null });
             }
 
-            return Ok(result);
+            return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
         }
 
         [HttpGet("getbymovie/{id}")]
@@ -82,10 +82,10 @@ namespace WebAPI.Controllers
             var result = await _playlistService.GetPlaylistsByMovieId(movieId, getPrivate);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages, data = (object?)null });
             }
 
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
         }
         
     }

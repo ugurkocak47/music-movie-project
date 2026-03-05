@@ -22,10 +22,10 @@ namespace WebAPI.Controllers
             var result = await _movieService.CreateMovieAsync(movieDto);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
 
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
 
@@ -35,10 +35,10 @@ namespace WebAPI.Controllers
             var result = await _movieService.UpdateMovieAsync(movieDto);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
 
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
         [HttpDelete("{id}")]
@@ -47,10 +47,10 @@ namespace WebAPI.Controllers
             var result = await _movieService.SoftDeleteMovieAsync(id);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages });
             }
 
-            return Ok(result.Messages);
+            return Ok(new { success = result.Success, messages = result.Messages });
         }
 
         [HttpGet]
@@ -59,10 +59,10 @@ namespace WebAPI.Controllers
             var result = await _movieService.GetAllMoviesAsync();
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages, data = (object?)null });
             }
 
-            return Ok(result);
+            return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
         }
 
         [HttpGet("{id}")]
@@ -71,10 +71,10 @@ namespace WebAPI.Controllers
             var result = await _movieService.GetMovieByIdAsync(id);
             if (!result.Success)
             {
-                return BadRequest(result.Messages);
+                return BadRequest(new { success = result.Success, messages = result.Messages, data = (object?)null });
             }
 
-            return Ok(result);
+            return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
         }
     }
 }
