@@ -1,0 +1,10 @@
+using Core.Utilities.Results;
+using DTO.Movies;
+using DTO.Musics;
+
+namespace Service.Abstracts;
+
+public interface ISpotifyApiService
+{
+    Task<IDataResult<List<CreateMusicDto>>> FetchMusicByGenreAsync(string genreName, int limit = 5);
+}

@@ -79,4 +79,37 @@ public class MovieCategoryService:IMovieCategoryService
         await Current.DeleteAsync(category);
         return new SuccessResult("Movie category deleted successfully.");
     }
+    
+    public async Task<IDataResult<GetMovieCategoryDto>> GetOrCreateMovieCategoryByNameAsync(string categoryName)
+    {
+        var normalizedName = categoryName.Trim().ToLowerInvariant();
+    
+        // Try to find existing category
+        var existingCategory = await Current.FirstOrDefaultAsync(c => 
+            c.Name.ToLower() == normalizedName);
+    
+        if (existingCategory != null)
+        {
+            var existingDto = _mapper.Map<GetMovieCategoryDto>(existingCategory);
+            return new SuccessDataResult<GetMovieCategoryDto>(existingDto, "Category found.");
+        }
+    
+        // Create new category if not found
+        var newCategoryDto = new CreateMovieCategoryDto
+        {
+            Name = categoryName,
+            Description = $"Genre: {categoryName}"
+        };
+    
+        var createResult = await CreateMovieCategoryAsync(newCategoryDto);
+        if (!createResult.Success)
+        {
+            return new ErrorDataResult<GetMovieCategoryDto>("Failed to create category.");
+        }
+    
+        // Fetch the newly created category
+        var newCategory = await Current.FirstOrDefaultAsync(c => c.Name.ToLower() == normalizedName);
+        var newDto = _mapper.Map<GetMovieCategoryDto>(newCategory);
+        return new SuccessDataResult<GetMovieCategoryDto>(newDto, "Category created successfully.");
+    }
 }

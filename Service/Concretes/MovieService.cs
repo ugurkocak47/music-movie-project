@@ -78,4 +78,16 @@ public class MovieService:IMovieService
         var movieMap = _mapper.Map<GetMovieDto>(movie);
         return new SuccessDataResult<GetMovieDto>(movieMap, "Movie returned successfully.");
     }
+
+    public async Task<IDataResult<GetMovieDto>> GetMovieByTitleAsync(string title)
+    {
+        var movie = await Current.FirstOrDefaultAsync(m=>m.NormalizedTitle == title.ToUpper());
+        if (movie == null)
+        {
+            return new ErrorDataResult<GetMovieDto>($"Movie with title {title} not found.");
+        }
+
+        var movieMap = _mapper.Map<GetMovieDto>(movie);
+        return new SuccessDataResult<GetMovieDto>(movieMap, "Movie returned successfully.");
+    }
 }

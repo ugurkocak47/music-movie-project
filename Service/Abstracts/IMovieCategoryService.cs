@@ -12,4 +12,5 @@ public interface IMovieCategoryService:IDbOperationEvent<MovieCategory,Guid,AppU
     public Task<IDataResult<List<GetMovieCategoryDto>>> GetAllMovieCategoriesAsync();
     public Task<IDataResult<GetMovieCategoryDto>> GetMovieCategoryByIdAsync(Guid id);
     public Task<IResult> SoftDeleteMovieCategoryAsync(Guid id);
+    public Task<IDataResult<GetMovieCategoryDto>> GetOrCreateMovieCategoryByNameAsync(string categoryName);
 }

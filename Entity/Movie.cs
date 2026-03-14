@@ -1,6 +1,7 @@
 ﻿using Core.Entity;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 
 namespace Entity
@@ -13,6 +14,7 @@ namespace Entity
         public string Title { get; set; } = null!;
 
         public string? OriginalTitle { get; set; }
+        public string NormalizedTitle { get; set; } = null!;
 
         // Maps to TMDb's "Overview" property
         public string? Description { get; set; }
@@ -23,7 +25,7 @@ namespace Entity
         // You append this to their base URL to show the image in your UI.
         public string? PosterPath { get; set; }
 
-        public double Rating { get; set; } // Maps to TMDb's VoteAverage
+        public float Rating { get; set; } // Maps to TMDb's VoteAverage
 
         // Navigation Property: A movie can have multiple categories (Genres)
         public ICollection<MovieCategory> Categories { get; set; } = new List<MovieCategory>();
