@@ -1,25 +1,25 @@
-using DTO.MusicCategories;
+using DTO.Musics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service.Abstracts;
 
-namespace WebAPI.Controllers
+namespace WebAPI.Areas.Admin.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class MusicCategoriesController : ControllerBase
+    public class MusicsController : ControllerBase
     {
-        private readonly IMusicCategoryService _musicCategoryService;
+        private readonly IMusicService _musicService;
 
-        public MusicCategoriesController(IMusicCategoryService musicCategoryService)
+        public MusicsController(IMusicService musicService)
         {
-            _musicCategoryService = musicCategoryService;
+            _musicService = musicService;
         }
 
         [HttpPost]
-        public async Task<IActionResult> AddMusicCategory(CreateMusicCategoryDto musicCategoryDto)
+        public async Task<IActionResult> AddMusic(CreateMusicDto musicDto)
         {
-            var result = await _musicCategoryService.CreateMusicCategoryAsync(musicCategoryDto);
+            var result = await _musicService.CreateMusicAsync(musicDto);
             if (!result.Success)
             {
                 return BadRequest(new { success = result.Success, messages = result.Messages });
@@ -29,9 +29,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateMusicCategory(UpdateMusicCategoryDto musicCategoryDto)
+        public async Task<IActionResult> UpdateMusic(UpdateMusicDto musicDto)
         {
-            var result = await _musicCategoryService.UpdateMusicCategoryAsync(musicCategoryDto);
+            var result = await _musicService.UpdateMusicAsync(musicDto);
             if (!result.Success)
             {
                 return BadRequest(new { success = result.Success, messages = result.Messages });
@@ -41,9 +41,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteMusicCategory(Guid id)
+        public async Task<IActionResult> DeleteMusic(Guid id)
         {
-            var result = await _musicCategoryService.SoftDeleteMusicCategoryAsync(id);
+            var result = await _musicService.SoftDeleteMusicAsync(id);
             if (!result.Success)
             {
                 return BadRequest(new { success = result.Success, messages = result.Messages });
@@ -53,9 +53,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllMusicCategories()
+        public async Task<IActionResult> GetAllMusics()
         {
-            var result = await _musicCategoryService.GetAllMusicCategoriesAsync();
+            var result = await _musicService.GetAllMusicsAsync();
             if (!result.Success)
             {
                 return BadRequest(new { success = result.Success, messages = result.Messages, data = (object?)null });
@@ -65,9 +65,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetMusicCategoryById(Guid id)
+        public async Task<IActionResult> GetMusicById(Guid id)
         {
-            var result = await _musicCategoryService.GetMusicCategoryByIdAsync(id);
+            var result = await _musicService.GetMusicByIdAsync(id);
             if (!result.Success)
             {
                 return BadRequest(new { success = result.Success, messages = result.Messages, data = (object?)null });
