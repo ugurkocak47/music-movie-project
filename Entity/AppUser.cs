@@ -14,7 +14,6 @@ namespace Entity
         [StringLength(250)]
         public string Surname { get; set; }
         public bool Gender { get; set; }
-        public DateTime BirthDate { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime? UpdatedDate { get; set; }
         public DateTime? DeletedDate { get; set; }

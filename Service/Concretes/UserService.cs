@@ -126,7 +126,6 @@ namespace Service.Concretes
             currentUser.UserName = userDto.UserName;
             currentUser.Email = userDto.Email;
             currentUser.PhoneNumber = userDto.PhoneNumber;
-            currentUser.BirthDate = userDto.BirthDate;
             currentUser.Gender = userDto.Gender;
 
             var updateToUserResult = await _userManager.UpdateAsync(currentUser);

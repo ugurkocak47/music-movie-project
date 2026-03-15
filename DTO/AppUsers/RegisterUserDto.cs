@@ -15,7 +15,7 @@ namespace DTO.AppUsers
             
         }
 
-        public RegisterUserDto(string name, string surname, string userName, string email, string phoneNumber, string password, bool gender, DateTime birthDate)
+        public RegisterUserDto(string name, string surname, string userName, string email, string phoneNumber, string password, bool gender)
         {
             Name = name;
             Surname = surname;
@@ -24,7 +24,6 @@ namespace DTO.AppUsers
             PhoneNumber = phoneNumber;
             Password = password;
             Gender = gender;
-            BirthDate = birthDate;
         }
         [Required(ErrorMessage = "İsim alanı boş bırakılamaz!")]
         [Display(Name ="*İsim: ")]
@@ -54,9 +53,5 @@ namespace DTO.AppUsers
         [Required(ErrorMessage = "Cinsiyet alanı boş bırakılamaz!")]   
         [Display(Name="*Cinsiyet: ")]
         public bool Gender { get; set; }
-        [Required(ErrorMessage = "Doğum tarihi alanı boş bırakılamaz!")]
-        [Display(Name = "*Doğum Tarihi: ")]
-        [DataType(DataType.DateTime)]
-        public DateTime BirthDate { get; set; }
     }
 }

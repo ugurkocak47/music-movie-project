@@ -3,19 +3,23 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Core.Utilities.Results;
+using DTO.MusicCategories;
 using Microsoft.Extensions.Configuration;
 using SpotifyAPI.Web;
 using DTO.Musics;
 using Service.Abstracts;
+using Entity;
 
 namespace Service.Concretes;
 
 public class SpotifyApiService : ISpotifyApiService
 {
     private readonly SpotifyClient _spotifyClient;
+    private readonly IMusicCategoryService _musicCategoryService;
 
-    public SpotifyApiService(IConfiguration configuration)
+    public SpotifyApiService(IConfiguration configuration, IMusicCategoryService musicCategoryService)
     {
+        _musicCategoryService = musicCategoryService;
         var clientId = configuration["ExternalApis:SpotifyClientId"];
         var clientSecret = configuration["ExternalApis:SpotifyClientSecret"];
 
@@ -80,5 +84,57 @@ public class SpotifyApiService : ISpotifyApiService
         }
 
         return new SuccessDataResult<List<CreateMusicDto>>(recommendedMusic);
+    }
+
+    public async Task<IDataResult<List<CreateMusicCategoryDto>>> GetAllNewMusicGenresAsync()
+    {
+        var addedCategories = new List<CreateMusicCategoryDto>();
+        try
+        {
+            // 1. Fetch genres from Spotify
+            var response = await _spotifyClient.Browse.GetRecommendationGenres();
+            var spotifyGenres = response.Genres;
+
+            // 2. Fetch existing categories from DB
+            var existingCategoriesResult = await _musicCategoryService.GetAllMusicCategoriesAsync();
+            var existingCategoryNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            if (existingCategoriesResult.Success && existingCategoriesResult.Data != null)
+            {
+                foreach (var category in existingCategoriesResult.Data)
+                {
+                    existingCategoryNames.Add(category.Name);
+                }
+            }
+
+            // 3. Filter and Add new genres
+            foreach (var genre in spotifyGenres)
+            {
+                if (!existingCategoryNames.Contains(genre))
+                {
+                    var newCategory = new CreateMusicCategoryDto
+                    {
+                        Name = char.ToUpper(genre[0]) + genre.Substring(1), 
+                        Description = "Imported from Spotify",
+                        CreatedDate = DateTime.UtcNow,
+                        LinkedMovieCategories = new List<MovieCategory>()
+                    };
+
+                    // Add to DB
+                    var addResult = await _musicCategoryService.CreateMusicCategoryAsync(newCategory);
+
+                    if (addResult.Success)
+                    {
+                        addedCategories.Add(newCategory);
+                    }
+                }
+            }
+
+            return new SuccessDataResult<List<CreateMusicCategoryDto>>(addedCategories, $"Added {addedCategories.Count} new genres from Spotify.");
+        }
+        catch (Exception ex)
+        {
+            return new ErrorDataResult<List<CreateMusicCategoryDto>>($"Failed to sync genres: {ex.Message}");
+        }
     }
 }

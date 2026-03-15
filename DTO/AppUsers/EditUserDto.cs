@@ -25,10 +25,6 @@ namespace DTO.AppUsers
         [Display(Name = "Telefon Numarası :")]
         public string PhoneNumber { get; set; } = null!;
 
-        [DataType(DataType.Date)]
-        [Display(Name = "Doğum Tarihi :")]
-        public DateTime BirthDate { get; set; }
-
         [Display(Name = "Cinsiyet :")]
         public bool Gender { get; set; }
     }
