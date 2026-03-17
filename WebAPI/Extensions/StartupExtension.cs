@@ -77,6 +77,7 @@ namespace WebAPI.Extensions
             services.AddScoped<IMovieCategoryService, MovieCategoryService>();
             services.AddScoped(typeof(ITBaseService<,,,>), typeof(TBaseService<,,,>));
             services.AddScoped<ISpotifyApiService, SpotifyApiService>();
+            services.AddScoped<ITmdbApiService, TmdbApiService>();
             services.AddScoped<IRecommendationService, RecommendationService>();
 
         }

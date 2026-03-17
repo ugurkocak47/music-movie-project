@@ -13,6 +13,7 @@ namespace Entity
         public virtual DbSet<MusicCategory> MusicCategories { get; set; }
         public virtual DbSet<MovieCategory> MovieCategories { get; set; }
         public virtual DbSet<Movie> Movies { get; set; }
+        public virtual DbSet<Playlist> Playlists { get; set; }
 
         public AppDbContext()
         {

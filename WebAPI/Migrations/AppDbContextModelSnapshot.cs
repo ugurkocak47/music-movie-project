@@ -268,6 +268,9 @@ namespace WebAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("PlaylistId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("PreviewUrl")
                         .HasColumnType("nvarchar(max)");
 
@@ -285,6 +288,8 @@ namespace WebAPI.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PlaylistId");
 
                     b.ToTable("Musics");
                 });
@@ -333,6 +338,61 @@ namespace WebAPI.Migrations
                     b.HasIndex("MusicId");
 
                     b.ToTable("MusicCategories");
+                });
+
+            modelBuilder.Entity("Entity.Playlist", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AppUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("FavoriteCount")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPublic")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("MovieId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PlaylistName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppUserId");
+
+                    b.HasIndex("MovieId");
+
+                    b.ToTable("Playlists");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -445,6 +505,13 @@ namespace WebAPI.Migrations
                         .HasForeignKey("MovieId");
                 });
 
+            modelBuilder.Entity("Entity.Music", b =>
+                {
+                    b.HasOne("Entity.Playlist", null)
+                        .WithMany("Musics")
+                        .HasForeignKey("PlaylistId");
+                });
+
             modelBuilder.Entity("Entity.MusicCategory", b =>
                 {
                     b.HasOne("Entity.MovieCategory", null)
@@ -454,6 +521,21 @@ namespace WebAPI.Migrations
                     b.HasOne("Entity.Music", null)
                         .WithMany("Categories")
                         .HasForeignKey("MusicId");
+                });
+
+            modelBuilder.Entity("Entity.Playlist", b =>
+                {
+                    b.HasOne("Entity.AppUser", null)
+                        .WithMany("FavoritePlaylists")
+                        .HasForeignKey("AppUserId");
+
+                    b.HasOne("Entity.Movie", "Movie")
+                        .WithMany()
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Movie");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
@@ -507,6 +589,11 @@ namespace WebAPI.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Entity.AppUser", b =>
+                {
+                    b.Navigation("FavoritePlaylists");
+                });
+
             modelBuilder.Entity("Entity.Movie", b =>
                 {
                     b.Navigation("Categories");
@@ -520,6 +607,11 @@ namespace WebAPI.Migrations
             modelBuilder.Entity("Entity.Music", b =>
                 {
                     b.Navigation("Categories");
+                });
+
+            modelBuilder.Entity("Entity.Playlist", b =>
+                {
+                    b.Navigation("Musics");
                 });
 #pragma warning restore 612, 618
         }
