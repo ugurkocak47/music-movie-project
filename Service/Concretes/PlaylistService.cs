@@ -5,6 +5,7 @@ using Core.Utilities.Results;
 using DTO.Playlists;
 using DTO.ValidationRules;
 using Entity;
+using Microsoft.AspNetCore.Identity;
 using Service.Abstracts;
 
 namespace Service.Concretes;
@@ -13,10 +14,12 @@ public class PlaylistService:IPlaylistService
 {
     public ITBaseService<Playlist, Guid, AppUser, AppDbContext> Current { get; }
     private readonly IMapper _mapper;
-    public PlaylistService(ITBaseService<Playlist, Guid, AppUser, AppDbContext> current, IMapper mapper)
+    private readonly UserManager<AppUser> _userManager;
+    public PlaylistService(ITBaseService<Playlist, Guid, AppUser, AppDbContext> current, IMapper mapper, IUserService userService, UserManager<AppUser> userManager)
     {
         Current = current;
         _mapper = mapper;
+        _userManager = userManager;
     }
 
     [ValidationAspect(typeof(PlaylistValidator))]
@@ -108,5 +111,58 @@ public class PlaylistService:IPlaylistService
 
         var playlistsMap = _mapper.Map<List<GetPlaylistDto>>(playlists);
         return new SuccessDataResult<List<GetPlaylistDto>>(playlistsMap, "Playlists returned successfully.");
+    }
+
+    public async Task<IResult> FavoritePlaylist(Guid userId, Guid playlistId)
+    {
+        // Fetch both user and playlist in parallel
+        var user = await _userManager.FindByIdAsync(userId.ToString());
+        if (user == null)
+        {
+            return new ErrorResult("User not found.");
+        }
+
+        var playlist = await Current.FirstOrDefaultAsync(p => p.Id == playlistId);
+        if (playlist == null)
+        {
+            return new ErrorResult($"Playlist with ID {playlistId} not found.");
+        }
+
+        // Check if already favorited
+        if (user.FavoritePlaylists.Any(p => p.Id == playlistId))
+        {
+            return new ErrorResult("This playlist is already in your favorites.");
+        }
+
+        playlist.FavoriteCount++;
+        await Current.UpdateAsync(playlist);
+        user.FavoritePlaylists.Add(playlist);
+        await _userManager.UpdateAsync(user);
+    
+        return new SuccessResult("Playlist added to favorites successfully.");
+    }
+
+    public async Task<IResult> AddToExistingPlaylist(Guid playlistId,CreatePlaylistDto playlistDto)
+    {
+        var playlist = await Current.FirstOrDefaultAsync(p => p.Id == playlistId);
+        if (playlist == null)
+        {
+            return new ErrorResult("Playlist not found.");
+        }
+
+        if (playlist.Movie != playlistDto.Movie)
+        {
+            return new ErrorResult("Playlist movies do not match.");
+        }
+        foreach (var music in playlistDto.Musics)
+        {
+            if (!playlist.Musics.Contains(music))
+            {
+                playlist.Musics.Add(music);
+            }
+        }
+
+        await Current.UpdateAsync(playlist);
+        return new SuccessResult("Added musics to playlist successfully.");
     }
 }

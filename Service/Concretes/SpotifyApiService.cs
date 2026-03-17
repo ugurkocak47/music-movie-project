@@ -116,8 +116,7 @@ public class SpotifyApiService : ISpotifyApiService
                     {
                         Name = char.ToUpper(genre[0]) + genre.Substring(1), 
                         Description = "Imported from Spotify",
-                        CreatedDate = DateTime.UtcNow,
-                        LinkedMovieCategories = new List<MovieCategory>()
+                        CreatedDate = DateTime.UtcNow
                     };
 
                     // Add to DB

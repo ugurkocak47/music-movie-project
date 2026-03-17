@@ -14,4 +14,6 @@ public interface IPlaylistService:IDbOperationEvent<Playlist,Guid,AppUser,AppDbC
     public Task<IDataResult<GetPlaylistDto>> GetPlaylistById(Guid id);
     public Task<IDataResult<List<GetPlaylistDto>>> GetPlaylistsByUserId(Guid userId, bool getPrivate);
     public Task<IDataResult<List<GetPlaylistDto>>> GetPlaylistsByMovieId(Guid movieId,bool getPrivate);
+    public Task<IResult> FavoritePlaylist(Guid userId,Guid playlistId);
+    public Task<IResult> AddToExistingPlaylist(Guid playlistId,CreatePlaylistDto playlistDto);
 }

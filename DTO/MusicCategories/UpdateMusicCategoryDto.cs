@@ -10,7 +10,6 @@ namespace DTO.MusicCategories
         public Guid Id { get; set; }
         public string Name { get; set; } = null!;
         public string? Description { get; set; }
-        public ICollection<MovieCategory> LinkedMovieCategories { get; set; }
         public DateTime UpdatedDate { get; set; }
     }
 }

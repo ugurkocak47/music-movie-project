@@ -14,6 +14,7 @@ namespace Entity
         [StringLength(250)]
         public string Surname { get; set; }
         public bool Gender { get; set; }
+        public List<Playlist> FavoritePlaylists { get; set; } = new List<Playlist>();
         public DateTime CreatedDate { get; set; }
         public DateTime? UpdatedDate { get; set; }
         public DateTime? DeletedDate { get; set; }
