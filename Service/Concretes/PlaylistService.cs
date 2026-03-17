@@ -156,7 +156,7 @@ public class PlaylistService:IPlaylistService
         }
         foreach (var music in playlistDto.Musics)
         {
-            if (!playlist.Musics.Contains(music))
+            if (!playlist.Musics.Any(m=>m.Id == music.Id))
             {
                 playlist.Musics.Add(music);
             }
