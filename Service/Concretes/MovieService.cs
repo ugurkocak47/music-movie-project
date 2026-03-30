@@ -5,6 +5,7 @@ using Core.Utilities.Results;
 using DTO.Movies;
 using DTO.ValidationRules;
 using Entity;
+using Microsoft.EntityFrameworkCore;
 using Service.Abstracts;
 
 namespace Service.Concretes;
@@ -13,17 +14,49 @@ public class MovieService:IMovieService
 {
     public ITBaseService<Movie, Guid, AppUser, AppDbContext> Current { get; }
     private readonly IMapper _mapper;
+    private readonly AppDbContext _context;
     
-    public MovieService(ITBaseService<Movie, Guid, AppUser, AppDbContext> current, IMapper mapper)
+    public MovieService(
+        ITBaseService<Movie, Guid, AppUser, AppDbContext> current, 
+        IMapper mapper,
+        AppDbContext context)
     {
         Current = current;
         _mapper = mapper;
+        _context = context;
     }
     
     [ValidationAspect(typeof(MovieValidator))]
     public async Task<IResult> CreateMovieAsync(CreateMovieDto movieDto)
     {
         var movieMap = _mapper.Map<Movie>(movieDto);
+        
+        // Handle existing MovieCategory entities to prevent tracking conflicts
+        if (movieMap.Categories != null && movieMap.Categories.Any())
+        {
+            var categoryList = movieMap.Categories.ToList();
+            movieMap.Categories.Clear();
+            
+            foreach (var category in categoryList)
+            {
+                // Check if this category is already being tracked
+                var trackedCategory = _context.ChangeTracker.Entries<MovieCategory>()
+                    .FirstOrDefault(e => e.Entity.Id == category.Id);
+                
+                if (trackedCategory != null)
+                {
+                    // Use the already-tracked entity
+                    movieMap.Categories.Add(trackedCategory.Entity);
+                }
+                else
+                {
+                    // Attach as unchanged (existing entity)
+                    _context.Entry(category).State = EntityState.Unchanged;
+                    movieMap.Categories.Add(category);
+                }
+            }
+        }
+        
         await Current.AddAsync(movieMap);
         return new SuccessResult("Movie added successfully.");
     }

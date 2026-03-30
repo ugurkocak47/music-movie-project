@@ -39,11 +39,20 @@ public class RecommendationService : IRecommendationService
         // 1. CHECK LOCAL DATABASE FIRST
         // ==========================================
         var localMovie = await _movieService.GetMovieByTitleAsync(movieTitle);
-        Movie targetMovie;
+        Movie? targetMovie;
 
         if (localMovie.Success && localMovie.Data != null)
         {
-            targetMovie = _mapper.Map<Movie>(localMovie);
+            // Movie exists in database - load it WITH relationships
+            targetMovie = await _context.Set<Movie>()
+                .Include(m => m.Categories)
+                .ThenInclude(mc => mc.SuggestedMusicCategories)
+                .FirstOrDefaultAsync(m => m.Id == localMovie.Data.Id);
+            
+            if (targetMovie == null)
+            {
+                return new ErrorDataResult<List<GetMusicDto>>("Failed to load movie with relationships.");
+            }
         }
         else
         {

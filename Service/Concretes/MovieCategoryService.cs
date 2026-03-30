@@ -5,16 +5,27 @@ using Core.Utilities.Results;
 using DTO.MovieCategories;
 using DTO.ValidationRules;
 using Entity;
+using Microsoft.EntityFrameworkCore;
 using Service.Abstracts;
+using Service.Helpers;
 
 namespace Service.Concretes;
 
 public class MovieCategoryService:IMovieCategoryService
 {
-    public MovieCategoryService(IMapper mapper, ITBaseService<MovieCategory, Guid, AppUser, AppDbContext> current)
+    private readonly AppDbContext _context;
+    private readonly IMusicCategoryService _musicCategoryService;
+    
+    public MovieCategoryService(
+        IMapper mapper, 
+        ITBaseService<MovieCategory, Guid, AppUser, AppDbContext> current,
+        AppDbContext context,
+        IMusicCategoryService musicCategoryService)
     {
         _mapper = mapper;
         Current = current;
+        _context = context;
+        _musicCategoryService = musicCategoryService;
     }
 
     public ITBaseService<MovieCategory, Guid, AppUser, AppDbContext> Current { get; }
@@ -109,7 +120,53 @@ public class MovieCategoryService:IMovieCategoryService
     
         // Fetch the newly created category
         var newCategory = await Current.FirstOrDefaultAsync(c => c.Name.ToLower() == normalizedName);
+        if (newCategory == null)
+        {
+            return new ErrorDataResult<GetMovieCategoryDto>("Failed to retrieve created category.");
+        }
+        
+        // 🆕 AUTOMATIC LINKING: Link suggested music genres using GenreMappingHelper
+        var suggestedMusicGenres = GenreMappingHelper.GetSuggestedMusicGenres(categoryName);
+        await AutoLinkMusicCategoriesToMovieCategoryAsync(newCategory.Id, suggestedMusicGenres);
+        
         var newDto = _mapper.Map<GetMovieCategoryDto>(newCategory);
-        return new SuccessDataResult<GetMovieCategoryDto>(newDto, "Category created successfully.");
+        return new SuccessDataResult<GetMovieCategoryDto>(newDto, "Category created and linked successfully.");
+    }
+    
+    /// <summary>
+    /// Automatically links music categories to a movie category.
+    /// Gets or creates music categories by name and sets their MovieCategoryId foreign key.
+    /// </summary>
+    private async Task AutoLinkMusicCategoriesToMovieCategoryAsync(Guid movieCategoryId, List<string> musicGenreNames)
+    {
+        foreach (var musicGenreName in musicGenreNames)
+        {
+            try
+            {
+                // Get or create the music category
+                var musicCategoryResult = await _musicCategoryService.GetOrCreateMusicCategoryByNameAsync(musicGenreName);
+                
+                if (musicCategoryResult.Success && musicCategoryResult.Data != null)
+                {
+                    // Link it to the movie category by setting the foreign key
+                    var musicCategory = await _context.Set<MusicCategory>()
+                        .FirstOrDefaultAsync(mc => mc.Id == musicCategoryResult.Data.Id);
+                    
+                    if (musicCategory != null)
+                    {
+                        // Set the MovieCategoryId shadow property to create the link
+                        _context.Entry(musicCategory).Property("MovieCategoryId").CurrentValue = movieCategoryId;
+                        await _context.SaveChangesAsync();
+                        
+                        Console.WriteLine($"✓ Linked music genre '{musicGenreName}' to movie category ID {movieCategoryId}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log but don't fail the entire operation if one link fails
+                Console.WriteLine($"⚠ Failed to link music genre '{musicGenreName}': {ex.Message}");
+            }
+        }
     }
 }

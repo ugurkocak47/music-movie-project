@@ -1,6 +1,7 @@
 using Core.Utilities.Results;
 using DTO.Movies;
 using Entity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Service.Abstracts;
 using TMDbLib.Client;
@@ -11,8 +12,12 @@ public class TmdbApiService : ITmdbApiService
 {
     private readonly TMDbClient _tmdbClient;
     private readonly IMovieCategoryService _movieCategoryService;
+    private readonly AppDbContext _context;
 
-    public TmdbApiService(IConfiguration configuration, IMovieCategoryService movieCategoryService)
+    public TmdbApiService(
+        IConfiguration configuration, 
+        IMovieCategoryService movieCategoryService,
+        AppDbContext context)
     {
         var apiKey = configuration["ExternalApis:TmdbApiKey"];
         if (string.IsNullOrEmpty(apiKey))
@@ -22,6 +27,7 @@ public class TmdbApiService : ITmdbApiService
 
         _tmdbClient = new TMDbClient(apiKey);
         _movieCategoryService = movieCategoryService;
+        _context = context;
     }
 
     public async Task<IDataResult<CreateMovieDto>> FetchMovieFromTmdbAsync(string movieTitle)
@@ -47,14 +53,16 @@ public class TmdbApiService : ITmdbApiService
                 var categoryResult = await _movieCategoryService.GetOrCreateMovieCategoryByNameAsync(genre.Name);
                 if (categoryResult.Success && categoryResult.Data != null)
                 {
-                    // Map to entity
-                    var categoryEntity = new MovieCategory
+                    // Fetch the actual entity from database without tracking
+                    // This prevents EF Core tracking conflicts
+                    var categoryEntity = await _context.Set<MovieCategory>()
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(mc => mc.Id == categoryResult.Data.Id);
+                    
+                    if (categoryEntity != null)
                     {
-                        Id = categoryResult.Data.Id,
-                        Name = categoryResult.Data.Name,
-                        Description = categoryResult.Data.Description
-                    };
-                    movieCategories.Add(categoryEntity);
+                        movieCategories.Add(categoryEntity);
+                    }
                 }
             }
         }

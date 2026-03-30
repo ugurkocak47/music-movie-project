@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Core.Utilities.Results;
 using DTO.MusicCategories;
 using Microsoft.Extensions.Configuration;
@@ -16,10 +17,14 @@ public class SpotifyApiService : ISpotifyApiService
 {
     private readonly SpotifyClient _spotifyClient;
     private readonly IMusicCategoryService _musicCategoryService;
+    private readonly IMusicService _musicService;
+    private readonly IMapper _mapper;
 
-    public SpotifyApiService(IConfiguration configuration, IMusicCategoryService musicCategoryService)
+    public SpotifyApiService(IConfiguration configuration, IMusicCategoryService musicCategoryService, IMapper mapper, IMusicService musicService)
     {
         _musicCategoryService = musicCategoryService;
+        _mapper = mapper;
+        _musicService = musicService;
         var clientId = configuration["ExternalApis:SpotifyClientId"];
         var clientSecret = configuration["ExternalApis:SpotifyClientSecret"];
 
@@ -38,52 +43,89 @@ public class SpotifyApiService : ISpotifyApiService
 
     public async Task<IDataResult<List<CreateMusicDto>>> FetchMusicByGenreAsync(string genreName, int limit = 5)
     {
-        var recommendedMusic = new List<CreateMusicDto>();
-
-        try
+        Console.WriteLine("Fetching random tracks for genre...");
+    
+        // 1. Define the genre you want to search (e.g., mapped from a movie category)
+    
+        // 2. Generate a random offset to ensure different results each time
+        // Note: Spotify caps the maximum offset at 1000 for searches
+        var random = new Random();
+        int randomOffset = random.Next(0, 500); 
+    
+        // 3. Create the search request using the 'genre:' filter syntax
+        var searchReq = new SearchRequest(SearchRequest.Types.Track, $"genre:\"{genreName}\"")
         {
-            // 1. Setup the request
-            var request = new RecommendationsRequest
+            Limit = limit, // How many random tracks you want back
+            Offset = randomOffset
+        };
+    
+        var searchResponse = await _spotifyClient.Search.Item(searchReq);
+        var responseItems = searchResponse.Tracks?.Items;
+        var tracksList = new List<CreateMusicDto>();            
+        if (responseItems != null && responseItems.Any())
+        {
+            Console.WriteLine($"\nSuccess! Random '{genreName}' tracks found at offset {randomOffset}:");
+            if ((await _musicCategoryService.GetMusicCategoryByNameAsync(genreName)) == null)
             {
-                Limit = limit
-            };
-            
-            // Spotify requires seed genres to be strictly lowercase
-            request.SeedGenres.Add(genreName.ToLower());
-
-            // 2. Call the Spotify API
-            var response = await _spotifyClient.Browse.GetRecommendations(request);
-
-            // 3. Map the Spotify Tracks to your CreateMusicDto
-            foreach (var track in response.Tracks)
-            {
-                var createDto = new CreateMusicDto()
+                var mc = new CreateMusicCategoryDto()
                 {
-                    SpotifyId = track.Id,
-                    Name = track.Name,
-                    // Grab the first artist's name
-                    ArtistName = track.Artists.FirstOrDefault()?.Name ?? "Unknown Artist",
-                    AlbumName = track.Album?.Name,
-                    DurationMs = track.DurationMs,
-                    PreviewUrl = track.PreviewUrl,
-                    
-                    // Extract the external Spotify URL so users can click and listen
-                    SpotifyUrl = track.ExternalUrls.ContainsKey("spotify") 
-                                 ? track.ExternalUrls["spotify"] 
-                                 : null
+                    Name = char.ToUpper(genreName[0]) + genreName.Substring(1),
+
                 };
+                var result = await _musicCategoryService.CreateMusicCategoryAsync(mc);
+                if (!result.Success)
+                {
+                    return new ErrorDataResult<List<CreateMusicDto>>(result.Messages);
+                }
 
-                recommendedMusic.Add(createDto);
+                Console.WriteLine("New music category has been added to the database.");
+                var newMC = await _musicCategoryService.GetMusicCategoryByNameAsync(genreName);
             }
+            foreach (var track in responseItems)
+            {
+                if (track == null) continue;
+                
+                var categoryResult = await _musicCategoryService.GetMusicCategoryByNameAsync(genreName);
+                var musicCategory = _mapper.Map<MusicCategory>(categoryResult.Data);
+                
+                CreateMusicDto newTrack = new CreateMusicDto()
+                {
+                    Name = track.Name,
+                    AlbumName = track.Album.Name,
+                    DurationMs = track.DurationMs,
+                    PreviewUrl = track.PreviewUrl ?? "No preview",
+                    SpotifyId = track.Id,
+                    ArtistName = track.Artists?.FirstOrDefault()?.Name ?? "Unknown Artist",
+                    Categories = new List<MusicCategory> { musicCategory },
+                    SpotifyUrl = track.Uri
+                };
+                var musicResult = await _musicService.GetMusicBySpotifyIdAsync(track.Id);
+                tracksList.Add(newTrack);
+                if (!musicResult.Success)
+                {
+                    Console.WriteLine("Music not found in database.");
+                }
+
+                var musicCreateResult = await _musicService.CreateMusicAsync(newTrack);
+                if (!musicCreateResult.Success)
+                {
+                    return new ErrorDataResult<List<CreateMusicDto>>(musicCreateResult.Messages);
+                }
+
+                Console.WriteLine("Music added to the database");
+                // Safely grab the first artist's name
+                string artistName = track.Artists?.FirstOrDefault()?.Name ?? "Unknown Artist";
+                Console.WriteLine($"- {track.Name} (by {artistName})");
+            }
+
+            
         }
-        catch (Exception ex)
+        else
         {
-            // If you pass a genre Spotify doesn't recognize, it will throw an API exception.
-            // In a production app, you'd log this error using an ILogger.
-            Console.WriteLine($"Spotify API Error: {ex.Message}");
+            Console.WriteLine($"No tracks found for genre '{genreName}'. Try a different genre.");
         }
 
-        return new SuccessDataResult<List<CreateMusicDto>>(recommendedMusic);
+        return new SuccessDataResult<List<CreateMusicDto>>(tracksList,"Musics returned successfully.");
     }
 
     public async Task<IDataResult<List<CreateMusicCategoryDto>>> GetAllNewMusicGenresAsync()
