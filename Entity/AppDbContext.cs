@@ -36,6 +36,20 @@ namespace Entity
             modelBuilder.Entity<AppRole>().ToTable("asp_net_roles");
             modelBuilder.Entity<IdentityUserRole<Guid>>().ToTable("asp_net_user_roles");
             modelBuilder.Entity<IdentityRoleClaim<Guid>>().ToTable("asp_net_role_claims");
+
+            // Configure many-to-many relationship between MovieCategory and MusicCategory
+            modelBuilder.Entity<MovieCategory>()
+                .HasMany(mc => mc.SuggestedMusicCategories)
+                .WithMany(m => m.MovieCategories)
+                .UsingEntity<Dictionary<string, object>>(
+                    "MovieCategoryMusicCategory",
+                    j => j.HasOne<MusicCategory>().WithMany().HasForeignKey("MusicCategoryId"),
+                    j => j.HasOne<MovieCategory>().WithMany().HasForeignKey("MovieCategoryId"),
+                    j =>
+                    {
+                        j.HasKey("MovieCategoryId", "MusicCategoryId");
+                        j.ToTable("movie_category_music_category");
+                    });
         }
     }
 }

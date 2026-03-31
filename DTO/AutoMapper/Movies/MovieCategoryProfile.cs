@@ -9,8 +9,14 @@ public class MovieCategoryProfile:Profile
 {
     public MovieCategoryProfile()
     {
-        CreateMap<CreateMovieCategoryDto, MovieCategory>().ReverseMap();
-        CreateMap<UpdateMovieCategoryDto, MovieCategory>().ReverseMap();
-        CreateMap<GetMovieCategoryDto, MovieCategory>().ReverseMap();
+        CreateMap<CreateMovieCategoryDto, MovieCategory>();
+        CreateMap<UpdateMovieCategoryDto, MovieCategory>();
+        
+        // Map MovieCategory to GetMovieCategoryDto, including the SuggestedMusicCategories
+        CreateMap<MovieCategory, GetMovieCategoryDto>()
+            .ForMember(dest => dest.SuggestedMusicCategories, 
+                opt => opt.MapFrom(src => src.SuggestedMusicCategories));
+        
+        CreateMap<GetMovieCategoryDto, MovieCategory>();
     }
 }

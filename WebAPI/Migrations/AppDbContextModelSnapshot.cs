@@ -315,9 +315,6 @@ namespace WebAPI.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<Guid?>("MovieCategoryId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<Guid?>("MusicId")
                         .HasColumnType("uniqueidentifier");
 
@@ -332,8 +329,6 @@ namespace WebAPI.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("MovieCategoryId");
 
                     b.HasIndex("MusicId");
 
@@ -498,6 +493,21 @@ namespace WebAPI.Migrations
                     b.ToTable("asp_net_user_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("MovieCategoryMusicCategory", b =>
+                {
+                    b.Property<Guid>("MovieCategoryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("MusicCategoryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("MovieCategoryId", "MusicCategoryId");
+
+                    b.HasIndex("MusicCategoryId");
+
+                    b.ToTable("movie_category_music_category", (string)null);
+                });
+
             modelBuilder.Entity("Entity.MovieCategory", b =>
                 {
                     b.HasOne("Entity.Movie", null)
@@ -514,10 +524,6 @@ namespace WebAPI.Migrations
 
             modelBuilder.Entity("Entity.MusicCategory", b =>
                 {
-                    b.HasOne("Entity.MovieCategory", null)
-                        .WithMany("SuggestedMusicCategories")
-                        .HasForeignKey("MovieCategoryId");
-
                     b.HasOne("Entity.Music", null)
                         .WithMany("Categories")
                         .HasForeignKey("MusicId");
@@ -589,6 +595,21 @@ namespace WebAPI.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("MovieCategoryMusicCategory", b =>
+                {
+                    b.HasOne("Entity.MovieCategory", null)
+                        .WithMany()
+                        .HasForeignKey("MovieCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entity.MusicCategory", null)
+                        .WithMany()
+                        .HasForeignKey("MusicCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Entity.AppUser", b =>
                 {
                     b.Navigation("FavoritePlaylists");
@@ -597,11 +618,6 @@ namespace WebAPI.Migrations
             modelBuilder.Entity("Entity.Movie", b =>
                 {
                     b.Navigation("Categories");
-                });
-
-            modelBuilder.Entity("Entity.MovieCategory", b =>
-                {
-                    b.Navigation("SuggestedMusicCategories");
                 });
 
             modelBuilder.Entity("Entity.Music", b =>

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace Entity
 {
@@ -9,5 +10,8 @@ namespace Entity
     {
         public string Name { get; set; } = null!;
         public string? Description { get; set; }
+
+        [JsonIgnore]
+        public ICollection<MovieCategory> MovieCategories { get; set; } = new List<MovieCategory>();
     }
 }
