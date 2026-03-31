@@ -1,4 +1,5 @@
 using DTO.AppRoles;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service.Abstracts;
@@ -7,6 +8,9 @@ namespace WebAPI.Areas.Admin.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    
+    [Authorize(Roles = "admin, role-action")]
+    [Area("Admin")]
     public class RolesController : ControllerBase
     {
         private readonly IRoleService _roleService;
@@ -15,7 +19,8 @@ namespace WebAPI.Areas.Admin.Controllers
         {
             _roleService = roleService;
         }
-
+        
+        
         [HttpGet("getuserroles/{id}")]
         public async Task<IActionResult> GetUserRoles(Guid id)
         {

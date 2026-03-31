@@ -1,4 +1,5 @@
 using DTO.MusicCategories;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service.Abstracts;
@@ -7,6 +8,9 @@ namespace WebAPI.Areas.Admin.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    
+    [Authorize(Roles = "admin")]
+    [Area("Admin")]
     public class MusicCategoriesController : ControllerBase
     {
         private readonly IMusicCategoryService _musicCategoryService;
