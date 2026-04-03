@@ -11,7 +11,9 @@ namespace Entity
         public virtual DbSet<AppRole> AppRoles { get; set; }
         public virtual DbSet<Music> Musics { get; set; }
         public virtual DbSet<MusicCategory> MusicCategories { get; set; }
+        public virtual DbSet<MusicCategoryLink> MusicCategoryLinks { get; set; }
         public virtual DbSet<MovieCategory> MovieCategories { get; set; }
+        public virtual DbSet<MovieCategoryLink> MovieCategoryLinks { get; set; }
         public virtual DbSet<Movie> Movies { get; set; }
         public virtual DbSet<Playlist> Playlists { get; set; }
 

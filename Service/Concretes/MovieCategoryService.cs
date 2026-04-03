@@ -69,7 +69,10 @@ public class MovieCategoryService:IMovieCategoryService
 
     public async Task<IDataResult<GetMovieCategoryDto>> GetMovieCategoryByIdAsync(Guid id)
     {
-        var category = await Current.FirstOrDefaultAsync(c => c.Id == id);
+        var category = await _context.Set<MovieCategory>()
+            .Include(mc => mc.SuggestedMusicCategories)
+            .FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted);
+        
         if (category == null)
         {
             return new ErrorDataResult<GetMovieCategoryDto>($"Movie category with ID {id} not found.");

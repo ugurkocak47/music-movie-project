@@ -7,7 +7,7 @@ namespace Service.Abstracts;
 
 public interface IMusicService:IDbOperationEvent<Music,Guid,AppUser,AppDbContext>
 {
-    public Task<IResult> CreateMusicAsync(CreateMusicDto musicDto);
+    public Task<IResult> CreateMusicAsync(CreateMusicDto musicDto, Guid? categoryId = null);
     public Task<IResult> UpdateMusicAsync(UpdateMusicDto musicDto);
     public Task<IResult> SoftDeleteMusicAsync(Guid id);
     public Task<IDataResult<List<GetMusicDto>>> GetAllMusicsAsync();

@@ -78,6 +78,7 @@ namespace WebAPI.Extensions
             services.AddScoped(typeof(ITBaseService<,,,>), typeof(TBaseService<,,,>));
             services.AddScoped<ISpotifyApiService, SpotifyApiService>();
             services.AddScoped<ITmdbApiService, TmdbApiService>();
+            services.AddScoped<ICategoryLinkingService, CategoryLinkingService>();
             services.AddScoped<IRecommendationService, RecommendationService>();
 
         }

@@ -86,7 +86,11 @@ public class SpotifyApiService : ISpotifyApiService
                 if (track == null) continue;
                 
                 var categoryResult = await _musicCategoryService.GetMusicCategoryByNameAsync(genreName);
-                var musicCategory = _mapper.Map<MusicCategory>(categoryResult.Data);
+                if (!categoryResult.Success || categoryResult.Data == null)
+                {
+                    Console.WriteLine($"⚠ Failed to get music category for genre '{genreName}'");
+                    continue;
+                }
                 
                 CreateMusicDto newTrack = new CreateMusicDto()
                 {
@@ -96,7 +100,6 @@ public class SpotifyApiService : ISpotifyApiService
                     PreviewUrl = track.PreviewUrl ?? "No preview",
                     SpotifyId = track.Id,
                     ArtistName = track.Artists?.FirstOrDefault()?.Name ?? "Unknown Artist",
-                    Categories = new List<MusicCategory> { musicCategory },
                     SpotifyUrl = track.Uri
                 };
                 var musicResult = await _musicService.GetMusicBySpotifyIdAsync(track.Id);
@@ -106,13 +109,14 @@ public class SpotifyApiService : ISpotifyApiService
                     Console.WriteLine("Music not found in database.");
                 }
 
-                var musicCreateResult = await _musicService.CreateMusicAsync(newTrack);
+                // Pass categoryId to auto-link music to category
+                var musicCreateResult = await _musicService.CreateMusicAsync(newTrack, categoryResult.Data.Id);
                 if (!musicCreateResult.Success)
                 {
                     return new ErrorDataResult<List<CreateMusicDto>>(musicCreateResult.Messages);
                 }
 
-                Console.WriteLine("Music added to the database");
+                Console.WriteLine($"✓ Music added to database and linked to category '{genreName}'");
                 // Safely grab the first artist's name
                 string artistName = track.Artists?.FirstOrDefault()?.Name ?? "Unknown Artist";
                 Console.WriteLine($"- {track.Name} (by {artistName})");

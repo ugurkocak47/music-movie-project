@@ -26,8 +26,5 @@ namespace Entity
         public string? PosterPath { get; set; }
 
         public float Rating { get; set; } // Maps to TMDb's VoteAverage
-
-        // Navigation Property: A movie can have multiple categories (Genres)
-        public ICollection<MovieCategory> Categories { get; set; } = new List<MovieCategory>();
     }
 }

@@ -12,5 +12,6 @@ public interface IMovieService:IDbOperationEvent<Movie,Guid,AppUser,AppDbContext
     public Task<IResult> SoftDeleteMovieAsync(Guid id);
     public Task<IDataResult<List<GetMovieDto>>> GetAllMoviesAsync();
     public Task<IDataResult<GetMovieDto>> GetMovieByIdAsync(Guid id);
+    public Task<IDataResult<GetMovieDto>> GetMovieByTmdbIdAsync(int tmdbId);
     public Task<IDataResult<GetMovieDto>> GetMovieByTitleAsync(string title);
 }

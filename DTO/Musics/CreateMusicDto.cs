@@ -14,7 +14,6 @@ namespace DTO.Musics
         public string? SpotifyUrl { get; set; }
         public string? PreviewUrl { get; set; }
         public int DurationMs { get; set; }
-        public ICollection<MusicCategory> Categories { get; set; }
         public DateTime CreatedDate { get; set; }
     }
 }

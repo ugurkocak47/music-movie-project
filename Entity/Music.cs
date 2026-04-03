@@ -26,8 +26,6 @@ namespace Entity
         public string? PreviewUrl { get; set; }
 
         public int DurationMs { get; set; } // Spotify returns duration in milliseconds
-
-        // Navigation Property: A track can fall under multiple music categories
-        public ICollection<MusicCategory> Categories { get; set; } = new List<MusicCategory>();
+        
     }
 }

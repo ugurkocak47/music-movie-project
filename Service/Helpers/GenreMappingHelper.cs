@@ -14,42 +14,70 @@ public static class GenreMappingHelper
     // Each movie genre maps to 2-4 music genres that match its mood/vibe
     private static readonly Dictionary<string, List<string>> GenreMappings = new()
     {
-        // Action & Adventure - High energy, intense
+        // Action & Adventure - High energy, intense, epic
         { "action", new() { "rock", "metal", "electronic", "hip-hop" } },
         { "adventure", new() { "rock", "indie", "folk", "world" } },
         
-        // Comedy & Light - Upbeat, fun
+        // Comedy & Light-hearted - Upbeat, fun, cheerful
         { "comedy", new() { "pop", "indie", "funk", "soul" } },
         { "family", new() { "pop", "indie", "folk", "country" } },
-        { "animation", new() { "pop", "indie", "funk" } },
+        { "animation", new() { "pop", "indie", "electronic" } },
         
-        // Drama & Serious - Emotional, deep
+        // Drama & Emotional - Deep, introspective, moving
         { "drama", new() { "indie", "folk", "classical", "jazz" } },
-        { "romance", new() { "pop", "r-n-b", "soul", "indie" } },
+        { "romance", new() { "pop", "r&b", "soul", "indie" } },
         
-        // Thriller & Suspense - Dark, intense
-        { "thriller", new() { "electronic", "indie", "rock" } },
+        // Thriller & Suspense - Dark, tense, mysterious
+        { "thriller", new() { "electronic", "rock", "indie" } },
         { "crime", new() { "hip-hop", "jazz", "electronic", "blues" } },
-        { "mystery", new() { "jazz", "classical", "indie", "ambient" } },
+        { "mystery", new() { "jazz", "classical", "indie", "electronic" } },
         
-        // Horror & Dark - Ominous, heavy
-        { "horror", new() { "metal", "industrial", "rock", "electronic" } },
+        // Horror & Dark - Ominous, heavy, unsettling
+        { "horror", new() { "metal", "rock", "electronic" } },
         
-        // Sci-Fi & Fantasy - Otherworldly, epic
-        { "sci-fi", new() { "electronic", "synthwave", "ambient", "techno" } },
-        { "science fiction", new() { "electronic", "synthwave", "ambient", "techno" } },
+        // Sci-Fi & Fantasy - Otherworldly, futuristic, epic
+        { "sci-fi", new() { "electronic", "rock", "indie" } },
+        { "science fiction", new() { "electronic", "rock", "indie" } },
         { "fantasy", new() { "folk", "world", "classical", "indie" } },
         
-        // Historical & Cultural
-        { "war", new() { "classical", "rock", "metal" } },
-        { "history", new() { "classical", "folk", "world" } },
-        { "western", new() { "country", "folk", "americana", "blues" } },
+        // Historical & Cultural - Period-appropriate, traditional
+        { "war", new() { "classical", "rock", "metal", "folk" } },
+        { "history", new() { "classical", "folk", "world", "jazz" } },
+        { "western", new() { "country", "folk", "rock", "blues" } },
+        { "period", new() { "classical", "jazz", "folk" } },
         
-        // Documentary & Informative
-        { "documentary", new() { "ambient", "classical", "world", "jazz" } },
+        // Biographical & Real Stories - Inspiring, reflective
+        { "biography", new() { "indie", "folk", "rock", "jazz" } },
+        { "biopic", new() { "indie", "folk", "rock", "jazz" } },
         
-        // Music & Performance
+        // Sports & Competition - Motivational, energetic
+        { "sport", new() { "rock", "hip-hop", "electronic", "pop" } },
+        { "sports", new() { "rock", "hip-hop", "electronic", "pop" } },
+        
+        // Music & Performance - Genre-spanning
         { "music", new() { "pop", "rock", "indie", "jazz" } },
+        { "musical", new() { "pop", "jazz", "indie", "soul" } },
+        
+        // Documentary & Educational - Thoughtful, atmospheric
+        { "documentary", new() { "indie", "classical", "world", "jazz" } },
+        { "news", new() { "jazz", "classical", "indie" } },
+        
+        // Noir & Detective - Moody, atmospheric
+        { "noir", new() { "jazz", "blues", "indie" } },
+        { "detective", new() { "jazz", "blues", "electronic" } },
+        
+        // Disaster & Survival - Intense, dramatic
+        { "disaster", new() { "rock", "electronic", "classical" } },
+        { "survival", new() { "rock", "folk", "indie" } },
+        
+        // Supernatural & Paranormal - Eerie, mysterious
+        { "supernatural", new() { "electronic", "indie", "rock" } },
+        { "paranormal", new() { "electronic", "indie", "metal" } },
+        
+        // Teen & Young Adult - Contemporary, relatable
+        { "teen", new() { "pop", "indie", "hip-hop", "rock" } },
+        { "coming of age", new() { "indie", "pop", "rock", "folk" } },
+        { "coming-of-age", new() { "indie", "pop", "rock", "folk" } },
         
         // Catch-all for TV Movies and Others
         { "tv movie", new() { "pop", "indie", "rock" } }

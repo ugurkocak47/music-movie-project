@@ -41,13 +41,16 @@ namespace Core.Service
 
         public async Task<T> AddAsync(T entity)
         {
-            if (_httpContextAccessor.HttpContext?.User != null)
+            var user = _httpContextAccessor.HttpContext?.User;
+
+            if (user == null || !user.Identity?.IsAuthenticated == true)
             {
-                var userId = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                entity.CreatedBy = Guid.Parse(userId);
+                throw new UnauthorizedAccessException("Bu işlemi yapabilmek için giriş yapmanız gerekiyor.");
             }
+            var userId = _userManager.GetUserId(user);
+
             entity.CreatedDate = DateTime.Now;
-            entity.UpdatedDate = DateTime.Now; 
+            entity.CreatedBy = Guid.Parse(userId!);
             await _dbSet.AddAsync(entity);
             await _context.SaveChangesAsync();
             return entity;
@@ -99,13 +102,16 @@ namespace Core.Service
 
         public async Task<bool> DeleteAsync(T entity)
         {
-            if (_httpContextAccessor.HttpContext?.User != null)
+            var user = _httpContextAccessor.HttpContext?.User;
+
+            if (user == null || !user.Identity?.IsAuthenticated == true)
             {
-                var userId = _httpContextAccessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                entity.UpdatedBy = Guid.Parse(userId);
+                throw new UnauthorizedAccessException("Bu işlemi yapabilmek için giriş yapmanız gerekiyor.");
             }
+            var userId = _userManager.GetUserId(user);
             entity.IsDeleted = true;
             entity.DeletedDate = DateTime.Now;
+            entity.UpdatedBy = Guid.Parse(userId);
             _dbSet.Update(entity);
             try {
                 await _context.SaveChangesAsync();

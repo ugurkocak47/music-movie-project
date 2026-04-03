@@ -14,7 +14,8 @@ public class RecommendationService : IRecommendationService
     private readonly IMusicService _musicService;
     private readonly ITmdbApiService _tmdbApiService;
     private readonly ISpotifyApiService _spotifyApiService;
-    private readonly AppDbContext _context; 
+    private readonly AppDbContext _context;
+    private readonly ICategoryLinkingService _categoryLinkingService;
     private readonly IMapper _mapper;
 
     public RecommendationService(
@@ -23,7 +24,7 @@ public class RecommendationService : IRecommendationService
         ITmdbApiService tmdbApiService,
         ISpotifyApiService spotifyApiService,
         AppDbContext context,
-        IMapper mapper)
+        IMapper mapper, ICategoryLinkingService categoryLinkingService)
     {
         _movieService = movieService;
         _musicService = musicService;
@@ -31,6 +32,7 @@ public class RecommendationService : IRecommendationService
         _spotifyApiService = spotifyApiService;
         _context = context;
         _mapper = mapper;
+        _categoryLinkingService = categoryLinkingService;
     }
 
     public async Task<IDataResult<List<GetMusicDto>>> GetMusicForMovieAsync(string movieTitle)
@@ -43,15 +45,12 @@ public class RecommendationService : IRecommendationService
 
         if (localMovie.Success && localMovie.Data != null)
         {
-            // Movie exists in database - load it WITH relationships
-            targetMovie = await _context.Set<Movie>()
-                .Include(m => m.Categories)
-                .ThenInclude(mc => mc.SuggestedMusicCategories)
-                .FirstOrDefaultAsync(m => m.Id == localMovie.Data.Id);
+            // Movie exists in database - reuse the already-fetched data
+            targetMovie = _mapper.Map<Movie>(localMovie.Data);
             
             if (targetMovie == null)
             {
-                return new ErrorDataResult<List<GetMusicDto>>("Failed to load movie with relationships.");
+                return new ErrorDataResult<List<GetMusicDto>>("Failed to map movie data.");
             }
         }
         else
@@ -74,10 +73,7 @@ public class RecommendationService : IRecommendationService
             }
 
             // Fetch the newly saved movie with its relationships (Categories and SuggestedMusicCategories)
-            targetMovie = (await _context.Set<Movie>()
-                .Include(m => m.Categories)
-                .ThenInclude(mc => mc.SuggestedMusicCategories)
-                .FirstOrDefaultAsync(m => m.TmdbId == tmdbMovieDto.Data.TmdbId))!;
+            targetMovie = _mapper.Map<Movie>((await _movieService.GetMovieByTmdbIdAsync(tmdbMovieMap.TmdbId)).Data);
             
             if (targetMovie == null)
             {
@@ -88,7 +84,13 @@ public class RecommendationService : IRecommendationService
         // ==========================================
         // 3. GET LINKED MUSIC CATEGORIES
         // ==========================================
-        var linkedMusicCategories = targetMovie.Categories
+        var movieCategoriesResult = await _categoryLinkingService.GetMovieCategoriesAsync(targetMovie.Id);
+        if (!movieCategoriesResult.Success || movieCategoriesResult.Data == null)
+        {
+            return new ErrorDataResult<List<GetMusicDto>>("Failed to retrieve movie categories.");
+        }
+
+        var linkedMusicCategories = movieCategoriesResult.Data
             .SelectMany(mc => mc.SuggestedMusicCategories)
             .Select(mc => mc.Name)
             .Distinct()
@@ -97,7 +99,7 @@ public class RecommendationService : IRecommendationService
         if (!linkedMusicCategories.Any())
         {
              // Fallback genre if the movie had no specific links
-             linkedMusicCategories.Add("pop");
+             linkedMusicCategories.Add("rock");
         }
 
         // Pick one random linked category
@@ -110,6 +112,11 @@ public class RecommendationService : IRecommendationService
         
         // Let's ask Spotify for fresh tracks based on the genre
         var spotifyMusicDtos = await _spotifyApiService.FetchMusicByGenreAsync(selectedGenre, limit: 5);
+        
+        if (!spotifyMusicDtos.Success || spotifyMusicDtos.Data == null)
+        {
+            return new ErrorDataResult<List<GetMusicDto>>("Failed to fetch music from Spotify.");
+        }
 
         var finalMusicList = new List<GetMusicDto>();
 
@@ -123,7 +130,7 @@ public class RecommendationService : IRecommendationService
             {
                 // Save new track using your existing CRUD service
                 await _musicService.CreateMusicAsync(newMusicMap);
-                
+                var newMusic = (await _musicService.GetMusicBySpotifyIdAsync(newMusicMap.SpotifyId)).Data;
                 // Map the CreateDto to a GetDto for the return list
                 finalMusicList.Add(_mapper.Map<GetMusicDto>(newMusicDto));
             }

@@ -15,7 +15,6 @@ namespace DTO.Movies
         public DateTime? ReleaseDate { get; set; }
         public string? PosterPath { get; set; }
         public float Rating { get; set; }
-        public ICollection<MovieCategory> Categories { get; set; }
         public DateTime UpdatedDate { get; set; }
     }
 }

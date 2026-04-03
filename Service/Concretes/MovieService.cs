@@ -31,33 +31,29 @@ public class MovieService:IMovieService
     {
         var movieMap = _mapper.Map<Movie>(movieDto);
         
-        // Handle existing MovieCategory entities to prevent tracking conflicts
-        if (movieMap.Categories != null && movieMap.Categories.Any())
+        await Current.AddAsync(movieMap);
+        
+        // Link categories if provided
+        if (movieDto.Categories != null && movieDto.Categories.Any())
         {
-            var categoryList = movieMap.Categories.ToList();
-            movieMap.Categories.Clear();
-            
-            foreach (var category in categoryList)
+            // Find the saved movie by TmdbId to get its database ID
+            var savedMovie = await Current.FirstOrDefaultAsync(m => m.TmdbId == movieMap.TmdbId);
+            if (savedMovie != null)
             {
-                // Check if this category is already being tracked
-                var trackedCategory = _context.ChangeTracker.Entries<MovieCategory>()
-                    .FirstOrDefault(e => e.Entity.Id == category.Id);
-                
-                if (trackedCategory != null)
+                foreach (var category in movieDto.Categories)
                 {
-                    // Use the already-tracked entity
-                    movieMap.Categories.Add(trackedCategory.Entity);
+                    // Create MovieCategoryLink directly
+                    var link = new MovieCategoryLink
+                    {
+                        MovieId = savedMovie.Id,
+                        CategoryId = category.Id
+                    };
+                    await _context.Set<MovieCategoryLink>().AddAsync(link);
                 }
-                else
-                {
-                    // Attach as unchanged (existing entity)
-                    _context.Entry(category).State = EntityState.Unchanged;
-                    movieMap.Categories.Add(category);
-                }
+                await _context.SaveChangesAsync();
             }
         }
         
-        await Current.AddAsync(movieMap);
         return new SuccessResult("Movie added successfully.");
     }
     
@@ -106,6 +102,18 @@ public class MovieService:IMovieService
         if (movie == null)
         {
             return new ErrorDataResult<GetMovieDto>($"Movie with ID {id} not found.");
+        }
+
+        var movieMap = _mapper.Map<GetMovieDto>(movie);
+        return new SuccessDataResult<GetMovieDto>(movieMap, "Movie returned successfully.");
+    }
+
+    public async Task<IDataResult<GetMovieDto>> GetMovieByTmdbIdAsync(int tmdbId)
+    {
+        var movie = await Current.FirstOrDefaultAsync(m => m.TmdbId == tmdbId);
+        if (movie == null)
+        {
+            return new ErrorDataResult<GetMovieDto>($"Movie with TMDB Id {tmdbId.ToString()}");
         }
 
         var movieMap = _mapper.Map<GetMovieDto>(movie);

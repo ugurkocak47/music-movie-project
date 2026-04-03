@@ -27,37 +27,30 @@ public class MusicService:IMusicService
     }
     
     [ValidationAspect(typeof(MusicValidator))]
-    public async Task<IResult> CreateMusicAsync(CreateMusicDto musicDto)
+    public async Task<IResult> CreateMusicAsync(CreateMusicDto musicDto, Guid? categoryId = null)
     {
         var musicMap = _mapper.Map<Music>(musicDto);
         
-        // Handle existing MusicCategory entities to prevent tracking conflicts
-        if (musicMap.Categories != null && musicMap.Categories.Any())
+        await Current.AddAsync(musicMap);
+        
+        // Link to category if provided
+        if (categoryId.HasValue)
         {
-            var categoryList = musicMap.Categories.ToList();
-            musicMap.Categories.Clear();
-            
-            foreach (var category in categoryList)
+            // Find the saved music by SpotifyId to get its database ID
+            var savedMusic = await Current.FirstOrDefaultAsync(m => m.SpotifyId == musicMap.SpotifyId);
+            if (savedMusic != null)
             {
-                // Check if this category is already being tracked
-                var trackedCategory = _context.ChangeTracker.Entries<MusicCategory>()
-                    .FirstOrDefault(e => e.Entity.Id == category.Id);
-                
-                if (trackedCategory != null)
+                // Create MusicCategoryLink directly
+                var link = new MusicCategoryLink
                 {
-                    // Use the already-tracked entity
-                    musicMap.Categories.Add(trackedCategory.Entity);
-                }
-                else
-                {
-                    // Attach as unchanged (existing entity)
-                    _context.Entry(category).State = EntityState.Unchanged;
-                    musicMap.Categories.Add(category);
-                }
+                    MusicId = savedMusic.Id,
+                    CategoryId = categoryId.Value
+                };
+                await _context.Set<MusicCategoryLink>().AddAsync(link);
+                await _context.SaveChangesAsync();
             }
         }
         
-        await Current.AddAsync(musicMap);
         return new SuccessResult("Music added successfully.");
     }
     
