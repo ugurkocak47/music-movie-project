@@ -7,7 +7,6 @@ namespace Entity
 {
     public class Music:IEntity<Guid>
     {
-        // The ID from SpotifyAPI.Web (e.g., "11dFghVXANMlKmJXsNCbNl")
         public string SpotifyId { get; set; } = null!;
 
         // Maps to Spotify's track Name

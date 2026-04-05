@@ -37,9 +37,7 @@ public class RecommendationService : IRecommendationService
 
     public async Task<IDataResult<List<GetMusicDto>>> GetMusicForMovieAsync(string movieTitle)
     {
-        // ==========================================
-        // 1. CHECK LOCAL DATABASE FIRST
-        // ==========================================
+        //Check local database if movie exists
         var localMovie = await _movieService.GetMovieByTitleAsync(movieTitle.ToUpper());
         Movie? targetMovie;
 
@@ -55,17 +53,17 @@ public class RecommendationService : IRecommendationService
         }
         else
         {
-            // ==========================================
-            // 2. CACHE MISS: FETCH FROM TMDB AND SAVE
-            // ==========================================
+            //Fetch movie from Tmdb if not found in local database
             var tmdbMovieDto = await _tmdbApiService.FetchMovieFromTmdbAsync(movieTitle);
             if (!tmdbMovieDto.Success || tmdbMovieDto.Data == null)
             {
                 return new ErrorDataResult<List<GetMusicDto>>("Movie not found in local database or TMDb.");
             }
-
+            
+            //Map the data to CreateMovieDto
             var tmdbMovieMap = _mapper.Map<CreateMovieDto>(tmdbMovieDto.Data);
-            // Use your existing CRUD service to save it!
+            
+            //Save the newly fetched movie to database
             var createResult = await _movieService.CreateMovieAsync(tmdbMovieMap);
             if (!createResult.Success)
             {
@@ -80,16 +78,14 @@ public class RecommendationService : IRecommendationService
                 return new ErrorDataResult<List<GetMusicDto>>("Failed to retrieve saved movie.");
             }
         }
-
-        // ==========================================
-        // 3. GET LINKED MUSIC CATEGORIES
-        // ==========================================
+        
         var movieCategoriesResult = await _categoryLinkingService.GetMovieCategoriesAsync(targetMovie.Id);
         if (!movieCategoriesResult.Success || movieCategoriesResult.Data == null)
         {
             return new ErrorDataResult<List<GetMusicDto>>("Failed to retrieve movie categories.");
         }
-
+        
+        //Get linked music genres
         var linkedMusicCategories = movieCategoriesResult.Data
             .SelectMany(mc => mc.SuggestedMusicCategories)
             .Select(mc => mc.Name)
@@ -101,15 +97,18 @@ public class RecommendationService : IRecommendationService
              // Fallback genre if the movie had no specific links
              linkedMusicCategories.Add("rock");
         }
-
-        // ==========================================
-        // 4. GET MUSIC FROM ALL LINKED GENRES
-        // ==========================================
         
-        var finalMusicList = new List<GetMusicDto>();
+        // Select randomly 3 genres from the linked music categories
+        var random = new Random();
+        var selectedGenres = linkedMusicCategories
+            .OrderBy(x => random.Next())
+            .Take(3)
+            .ToList();
+        
+        var allFetchedMusic = new List<GetMusicDto>();
 
-        // Get 5 tracks from EACH linked music genre
-        foreach (var genre in linkedMusicCategories)
+        // Get 5 tracks from EACH of the 3 selected genres (total: 15 tracks)
+        foreach (var genre in selectedGenres)
         {
             Console.WriteLine($"Fetching 5 tracks for genre: {genre}");
             
@@ -131,30 +130,26 @@ public class RecommendationService : IRecommendationService
                 {
                     // Save new track using your existing CRUD service
                     await _musicService.CreateMusicAsync(newMusicDto);
-                    finalMusicList.Add(_mapper.Map<GetMusicDto>(newMusicDto));
+                    allFetchedMusic.Add(_mapper.Map<GetMusicDto>(newMusicDto));
                 }
                 else
                 {
-                    // We already had it, just add it to the return list
-                    finalMusicList.Add(_mapper.Map<GetMusicDto>(existingMusic));
+                    // We already had it, just add it to the list
+                    allFetchedMusic.Add(_mapper.Map<GetMusicDto>(existingMusic));
                 }
             }
         }
 
-        if (!finalMusicList.Any())
+        if (!allFetchedMusic.Any())
         {
             return new ErrorDataResult<List<GetMusicDto>>("No music tracks found for this movie.");
         }
 
-        // Shuffle the music list for variety and take only 5
-        var random = new Random();
-        var shuffledList = finalMusicList.OrderBy(x => random.Next()).Take(5).ToList();
-
-        // ==========================================
-        // 5. RETURN SUCCESS
-        // ==========================================
+        // Shuffle the 15 fetched tracks and take only 5 for the final list
+        var shuffledList = allFetchedMusic.OrderBy(x => random.Next()).Take(5).ToList();
+        
         return new SuccessDataResult<List<GetMusicDto>>(
             shuffledList, 
-            $"Successfully generated {shuffledList.Count} music tracks from {linkedMusicCategories.Count} genres for {targetMovie.Title}");
+            $"Successfully generated {shuffledList.Count} music tracks from {selectedGenres.Count} randomly selected genres for {targetMovie.Title}");
     }
 }

@@ -33,7 +33,7 @@ public class TmdbApiService : ITmdbApiService
 
     public async Task<IDataResult<CreateMovieDto>> FetchMovieFromTmdbAsync(string movieTitle)
     {
-        // 1. Search for the movie
+        //Search for the movie
         var searchResults = await _tmdbClient.SearchMovieAsync(movieTitle);
         var firstResult = searchResults.Results.FirstOrDefault();
 
@@ -42,10 +42,10 @@ public class TmdbApiService : ITmdbApiService
             return new ErrorDataResult<CreateMovieDto>("Movie not found.");
         }
 
-        // 2. Fetch full details to get genres
+        //Fetch full details to get genres
         var movieDetails = await _tmdbClient.GetMovieAsync(firstResult.Id);
 
-        // 3. Process genres and get/create MovieCategory entities
+        //Process genres and get/create MovieCategory entities
         var movieCategories = new List<MovieCategory>();
         if (movieDetails.Genres != null && movieDetails.Genres.Any())
         {
@@ -68,7 +68,7 @@ public class TmdbApiService : ITmdbApiService
             }
         }
 
-        // 4. Map to GetMovieDto with categories
+        //Map to GetMovieDto with categories
         var movieDto = new CreateMovieDto()
         {
             TmdbId = movieDetails!.Id,
@@ -78,7 +78,7 @@ public class TmdbApiService : ITmdbApiService
             ReleaseDate = movieDetails.ReleaseDate,
             PosterPath = movieDetails.PosterPath,
             Rating = (float)movieDetails.VoteAverage,
-            Categories = movieCategories, // ✅ Now populated with actual genres!
+            Categories = movieCategories, //Now populated with actual genres!
             CreatedDate = DateTime.UtcNow,
         };
 

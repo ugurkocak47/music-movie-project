@@ -1,4 +1,5 @@
 ﻿﻿using DTO.AppUsers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Service.Abstracts;
@@ -70,6 +71,18 @@ namespace WebAPI.Controllers
                 return BadRequest(new { success = result.Success, messages = result.Messages });
             }
             return Ok(new { success = result.Success, messages = result.Messages });
+        }
+
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<IActionResult> GetCurrentUserAsync()
+        {
+            var result = await _userService.GetCurrentUserAsync();
+            if (!result.Success)
+            {
+                return Unauthorized(new { success = result.Success, messages = result.Messages, data = (object?)null });
+            }
+            return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
         }
 
 

@@ -44,15 +44,13 @@ public class SpotifyApiService : ISpotifyApiService
     public async Task<IDataResult<List<CreateMusicDto>>> FetchMusicByGenreAsync(string genreName, int limit = 5)
     {
         Console.WriteLine("Fetching random tracks for genre...");
-    
-        // 1. Define the genre you want to search (e.g., mapped from a movie category)
-    
-        // 2. Generate a random offset to ensure different results each time
+        
+        //Generate a random offset to ensure different results each time
         // Note: Spotify caps the maximum offset at 1000 for searches
         var random = new Random();
         int randomOffset = random.Next(0, 500); 
     
-        // 3. Create the search request using the 'genre:' filter syntax
+        //Create the search request using the 'genre:' filter syntax
         var searchReq = new SearchRequest(SearchRequest.Types.Track, $"genre:\"{genreName}\"")
         {
             Limit = limit, // How many random tracks you want back
@@ -143,11 +141,11 @@ public class SpotifyApiService : ISpotifyApiService
         var addedCategories = new List<CreateMusicCategoryDto>();
         try
         {
-            // 1. Fetch genres from Spotify
+            //Fetch genres from Spotify
             var response = await _spotifyClient.Browse.GetRecommendationGenres();
             var spotifyGenres = response.Genres;
 
-            // 2. Fetch existing categories from DB
+            //Fetch existing categories from DB
             var existingCategoriesResult = await _musicCategoryService.GetAllMusicCategoriesAsync();
             var existingCategoryNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
@@ -159,7 +157,7 @@ public class SpotifyApiService : ISpotifyApiService
                 }
             }
 
-            // 3. Filter and Add new genres
+            //Filter and Add new genres
             foreach (var genre in spotifyGenres)
             {
                 if (!existingCategoryNames.Contains(genre))
@@ -171,7 +169,7 @@ public class SpotifyApiService : ISpotifyApiService
                         CreatedDate = DateTime.UtcNow
                     };
 
-                    // Add to DB
+                    // Add to local database
                     var addResult = await _musicCategoryService.CreateMusicCategoryAsync(newCategory);
 
                     if (addResult.Success)

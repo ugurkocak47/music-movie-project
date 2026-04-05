@@ -16,6 +16,7 @@ namespace DTO.AutoMapper.AppUsers
             CreateMap<RegisterUserDto, AppUser>().ReverseMap();
             CreateMap<ListUserDto, AppUser>().ReverseMap();
             CreateMap<EditUserDto, AppUser>().ReverseMap();
+            CreateMap<CurrentUserDto, AppUser>().ReverseMap();
         }
     }
 }

@@ -109,14 +109,16 @@ namespace Service.Concretes
             return new SuccessResult();
         }
 
-        public async Task<IDataResult<AppUser>> GetCurrentUserAsync()
+        public async Task<IDataResult<CurrentUserDto>> GetCurrentUserAsync()
         {
             var currentUser = await _userManager.FindByNameAsync(_httpContextAccessor.HttpContext?.User.Identity!.Name!);
             if (currentUser == null)
             {
-                return new ErrorDataResult<AppUser>();
+                return new ErrorDataResult<CurrentUserDto>();
             }
-            return new SuccessDataResult<AppUser>(currentUser);
+            
+            var currentUserDto = _mapper.Map<CurrentUserDto>(currentUser);
+            return new SuccessDataResult<CurrentUserDto>(currentUserDto);
         }
 
         public async Task<IDataResult<EditUserDto>> EditUserInformationAsync(EditUserDto userDto)

@@ -30,7 +30,7 @@ public class MovieService:IMovieService
     [ValidationAspect(typeof(MovieValidator))]
     public async Task<IResult> CreateMovieAsync(CreateMovieDto movieDto)
     {
-        var doesMovieExist = await Current.FirstOrDefaultAsync(m => m.NormalizedTitle == movieDto.NormalizedTitle);
+        var doesMovieExist = await Current.FirstOrDefaultAsync(m => m.NormalizedTitle == movieDto.NormalizedTitle || m.TmdbId == movieDto.TmdbId);
         if (doesMovieExist != null)
         {
             return new ErrorResult("Movie already exists");

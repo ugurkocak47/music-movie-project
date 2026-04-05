@@ -128,7 +128,7 @@ public class MovieCategoryService:IMovieCategoryService
             return new ErrorDataResult<GetMovieCategoryDto>("Failed to retrieve created category.");
         }
         
-        // 🆕 AUTOMATIC LINKING: Link suggested music genres using GenreMappingHelper
+        //Link suggested music genres using GenreMappingHelper
         var suggestedMusicGenres = GenreMappingHelper.GetSuggestedMusicGenres(categoryName);
         await AutoLinkMusicCategoriesToMovieCategoryAsync(newCategory.Id, suggestedMusicGenres);
         
@@ -136,23 +136,10 @@ public class MovieCategoryService:IMovieCategoryService
         return new SuccessDataResult<GetMovieCategoryDto>(newDto, "Category created and linked successfully.");
     }
     
-    /// <summary>
-    /// Automatically links music categories to a movie category.
-    /// Gets or creates music categories by name and adds them to the many-to-many relationship.
-    /// </summary>
+    // Automatically links music categories to a movie category.
+    // Gets or creates music categories by name and adds them to the many-to-many relationship.
     private async Task AutoLinkMusicCategoriesToMovieCategoryAsync(Guid movieCategoryId, List<string> musicGenreNames)
     {
-        // Load the movie category with its existing music category relationships
-        var movieCategory = await _context.Set<MovieCategory>()
-            .Include(mc => mc.SuggestedMusicCategories)
-            .FirstOrDefaultAsync(mc => mc.Id == movieCategoryId);
-        
-        if (movieCategory == null)
-        {
-            Console.WriteLine($"⚠ Movie category with ID {movieCategoryId} not found");
-            return;
-        }
-
         foreach (var musicGenreName in musicGenreNames)
         {
             try
@@ -162,34 +149,43 @@ public class MovieCategoryService:IMovieCategoryService
                 
                 if (musicCategoryResult.Success && musicCategoryResult.Data != null)
                 {
-                    // Check if this music category is already linked
-                    if (!movieCategory.SuggestedMusicCategories.Any(mc => mc.Id == musicCategoryResult.Data.Id))
+                    var musicCategoryId = musicCategoryResult.Data.Id;
+                    
+                    // Check if this relationship already exists in the database
+                    var existingLink = await _context.Set<MovieCategory>()
+                        .Where(mc => mc.Id == movieCategoryId)
+                        .SelectMany(mc => mc.SuggestedMusicCategories)
+                        .AnyAsync(mcat => mcat.Id == musicCategoryId);
+                    
+                    if (!existingLink)
                     {
-                        // Load the full music category entity
+                        // Load both entities
+                        var movieCategory = await _context.Set<MovieCategory>()
+                            .Include(mc => mc.SuggestedMusicCategories)
+                            .FirstOrDefaultAsync(mc => mc.Id == movieCategoryId);
+                            
                         var musicCategory = await _context.Set<MusicCategory>()
-                            .FirstOrDefaultAsync(mc => mc.Id == musicCategoryResult.Data.Id);
+                            .FirstOrDefaultAsync(mc => mc.Id == musicCategoryId);
                         
-                        if (musicCategory != null)
+                        if (movieCategory != null && musicCategory != null)
                         {
                             // Add to the collection (EF Core handles the join table)
                             movieCategory.SuggestedMusicCategories.Add(musicCategory);
-                            Console.WriteLine($"✓ Linked music genre '{musicGenreName}' to movie category ID {movieCategoryId}");
+                            await _context.SaveChangesAsync();
+                            Console.WriteLine($"Linked music genre '{musicGenreName}' to movie category ID {movieCategoryId}");
                         }
                     }
                     else
                     {
-                        Console.WriteLine($"✓ Music genre '{musicGenreName}' already linked to movie category ID {movieCategoryId}");
+                        Console.WriteLine($"Music genre '{musicGenreName}' already linked to movie category ID {movieCategoryId}");
                     }
                 }
             }
             catch (Exception ex)
             {
                 // Log but don't fail the entire operation if one link fails
-                Console.WriteLine($"⚠ Failed to link music genre '{musicGenreName}': {ex.Message}");
+                Console.WriteLine($"Failed to link music genre '{musicGenreName}': {ex.Message}");
             }
         }
-        
-        // Save all changes at once
-        await _context.SaveChangesAsync();
     }
 }
