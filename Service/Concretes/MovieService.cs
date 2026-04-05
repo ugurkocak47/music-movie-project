@@ -30,6 +30,11 @@ public class MovieService:IMovieService
     [ValidationAspect(typeof(MovieValidator))]
     public async Task<IResult> CreateMovieAsync(CreateMovieDto movieDto)
     {
+        var doesMovieExist = await Current.FirstOrDefaultAsync(m => m.NormalizedTitle == movieDto.NormalizedTitle);
+        if (doesMovieExist != null)
+        {
+            return new ErrorResult("Movie already exists");
+        }
         var movieMap = _mapper.Map<Movie>(movieDto);
         movieMap.PosterPath = "https://image.tmdb.org/t/p/w500" + movieMap.PosterPath;
         await Current.AddAsync(movieMap);
