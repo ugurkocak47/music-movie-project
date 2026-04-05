@@ -1,3 +1,4 @@
+using Core.Helpers;
 using Core.Utilities.Results;
 using DTO.Movies;
 using Entity;
@@ -72,7 +73,7 @@ public class TmdbApiService : ITmdbApiService
         {
             TmdbId = movieDetails!.Id,
             Title = movieDetails.Title!,
-            NormalizedTitle = movieDetails.Title?.ToUpperInvariant() ?? string.Empty,
+            NormalizedTitle = StringHelper.NormalizeTurkish(movieDetails.Title ?? string.Empty),
             Description = movieDetails.Overview,
             ReleaseDate = movieDetails.ReleaseDate,
             PosterPath = movieDetails.PosterPath,

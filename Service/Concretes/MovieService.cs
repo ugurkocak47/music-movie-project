@@ -1,5 +1,6 @@
 using AutoMapper;
 using Core.Aspects.Autofac.Validation;
+using Core.Helpers;
 using Core.Service;
 using Core.Utilities.Results;
 using DTO.Movies;
@@ -30,7 +31,7 @@ public class MovieService:IMovieService
     public async Task<IResult> CreateMovieAsync(CreateMovieDto movieDto)
     {
         var movieMap = _mapper.Map<Movie>(movieDto);
-        
+        movieMap.PosterPath = "https://image.tmdb.org/t/p/w500" + movieMap.PosterPath;
         await Current.AddAsync(movieMap);
         
         // Link categories if provided
@@ -122,7 +123,8 @@ public class MovieService:IMovieService
 
     public async Task<IDataResult<GetMovieDto>> GetMovieByTitleAsync(string title)
     {
-        var movie = await Current.FirstOrDefaultAsync(m=>m.NormalizedTitle == title.ToUpper());
+        var normalizedTitle = StringHelper.NormalizeTurkish(title);
+        var movie = await Current.FirstOrDefaultAsync(m => m.NormalizedTitle == normalizedTitle);
         if (movie == null)
         {
             return new ErrorDataResult<GetMovieDto>($"Movie with title {title} not found.");

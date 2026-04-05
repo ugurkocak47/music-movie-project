@@ -40,7 +40,7 @@ public class RecommendationService : IRecommendationService
         // ==========================================
         // 1. CHECK LOCAL DATABASE FIRST
         // ==========================================
-        var localMovie = await _movieService.GetMovieByTitleAsync(movieTitle);
+        var localMovie = await _movieService.GetMovieByTitleAsync(movieTitle.ToUpper());
         Movie? targetMovie;
 
         if (localMovie.Success && localMovie.Data != null)
