@@ -102,49 +102,59 @@ public class RecommendationService : IRecommendationService
              linkedMusicCategories.Add("rock");
         }
 
-        // Pick one random linked category
-        var random = new Random();
-        var selectedGenre = linkedMusicCategories[random.Next(linkedMusicCategories.Count)];
-
         // ==========================================
-        // 4. GET MUSIC FROM LOCAL DB OR SPOTIFY
+        // 4. GET MUSIC FROM ALL LINKED GENRES
         // ==========================================
         
-        // Let's ask Spotify for fresh tracks based on the genre
-        var spotifyMusicDtos = await _spotifyApiService.FetchMusicByGenreAsync(selectedGenre, limit: 5);
-        
-        if (!spotifyMusicDtos.Success || spotifyMusicDtos.Data == null)
-        {
-            return new ErrorDataResult<List<GetMusicDto>>("Failed to fetch music from Spotify.");
-        }
-
         var finalMusicList = new List<GetMusicDto>();
 
-        foreach (var newMusicDto in spotifyMusicDtos.Data)
+        // Get 5 tracks from EACH linked music genre
+        foreach (var genre in linkedMusicCategories)
         {
-            // Check if we already have this specific Spotify ID in our DB
-            var existingMusic = await _context.Set<Music>()
-                .FirstOrDefaultAsync(m => m.SpotifyId == newMusicDto.SpotifyId);
-            var newMusicMap = _mapper.Map<CreateMusicDto>(_mapper.Map<Music>(newMusicDto));
-            if (existingMusic == null)
+            Console.WriteLine($"Fetching 5 tracks for genre: {genre}");
+            
+            var spotifyMusicDtos = await _spotifyApiService.FetchMusicByGenreAsync(genre, limit: 5);
+            
+            if (!spotifyMusicDtos.Success || spotifyMusicDtos.Data == null)
             {
-                // Save new track using your existing CRUD service
-                
-                await _musicService.CreateMusicAsync(newMusicMap);
-                var newMusic = (await _musicService.GetMusicBySpotifyIdAsync(newMusicMap.SpotifyId)).Data;
-                // Map the CreateDto to a GetDto for the return list
-                finalMusicList.Add(_mapper.Map<GetMusicDto>(newMusicDto));
+                Console.WriteLine($"Failed to fetch music for genre '{genre}', skipping...");
+                continue; // Skip this genre if failed
             }
-            else
+
+            foreach (var newMusicDto in spotifyMusicDtos.Data)
             {
-                // We already had it, just add it to the return list
-                finalMusicList.Add(_mapper.Map<GetMusicDto>(existingMusic));
+                // Check if we already have this specific Spotify ID in our DB
+                var existingMusic = await _context.Set<Music>()
+                    .FirstOrDefaultAsync(m => m.SpotifyId == newMusicDto.SpotifyId);
+                    
+                if (existingMusic == null)
+                {
+                    // Save new track using your existing CRUD service
+                    await _musicService.CreateMusicAsync(newMusicDto);
+                    finalMusicList.Add(_mapper.Map<GetMusicDto>(newMusicDto));
+                }
+                else
+                {
+                    // We already had it, just add it to the return list
+                    finalMusicList.Add(_mapper.Map<GetMusicDto>(existingMusic));
+                }
             }
         }
+
+        if (!finalMusicList.Any())
+        {
+            return new ErrorDataResult<List<GetMusicDto>>("No music tracks found for this movie.");
+        }
+
+        // Shuffle the music list for variety and take only 5
+        var random = new Random();
+        var shuffledList = finalMusicList.OrderBy(x => random.Next()).Take(5).ToList();
 
         // ==========================================
         // 5. RETURN SUCCESS
         // ==========================================
-        return new SuccessDataResult<List<GetMusicDto>>(finalMusicList, $"Successfully generated music for {targetMovie.Title}");
+        return new SuccessDataResult<List<GetMusicDto>>(
+            shuffledList, 
+            $"Successfully generated {shuffledList.Count} music tracks from {linkedMusicCategories.Count} genres for {targetMovie.Title}");
     }
 }
