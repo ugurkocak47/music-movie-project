@@ -14,6 +14,7 @@ namespace DTO.Musics
         public string? AlbumName { get; set; }
         public string? SpotifyUrl { get; set; }
         public string? PreviewUrl { get; set; }
+        public string? AlbumImageUrl { get; set; }
         public int DurationMs { get; set; }
         public DateTime CreatedDate { get; set; }
         public DateTime? UpdatedDate { get; set; }

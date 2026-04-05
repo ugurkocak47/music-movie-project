@@ -25,6 +25,9 @@ namespace Entity
         // Spotify often provides a 30-second MP3 preview URL
         public string? PreviewUrl { get; set; }
 
+        // Album cover image URL
+        public string? AlbumImageUrl { get; set; }
+
         public int DurationMs { get; set; } // Spotify returns duration in milliseconds
         
     }

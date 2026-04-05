@@ -91,6 +91,11 @@ public class SpotifyApiService : ISpotifyApiService
                     Console.WriteLine($"⚠ Failed to get music category for genre '{genreName}'");
                     continue;
                 }
+
+                Console.WriteLine(track.PreviewUrl);
+                
+                // Get album cover image (640x640 is typically the largest)
+                string? albumImageUrl = track.Album?.Images?.FirstOrDefault()?.Url;
                 
                 CreateMusicDto newTrack = new CreateMusicDto()
                 {
@@ -98,6 +103,7 @@ public class SpotifyApiService : ISpotifyApiService
                     AlbumName = track.Album.Name,
                     DurationMs = track.DurationMs,
                     PreviewUrl = track.PreviewUrl ?? "No preview",
+                    AlbumImageUrl = albumImageUrl,
                     SpotifyId = track.Id,
                     ArtistName = track.Artists?.FirstOrDefault()?.Name ?? "Unknown Artist",
                     SpotifyUrl = track.Uri

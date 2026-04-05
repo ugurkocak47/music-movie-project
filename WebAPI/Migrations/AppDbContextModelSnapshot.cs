@@ -217,9 +217,6 @@ namespace WebAPI.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<Guid?>("MovieId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -231,8 +228,6 @@ namespace WebAPI.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("MovieId");
 
                     b.ToTable("MovieCategories");
                 });
@@ -277,6 +272,9 @@ namespace WebAPI.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AlbumImageUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("AlbumName")
                         .HasColumnType("nvarchar(max)");
@@ -350,9 +348,6 @@ namespace WebAPI.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<Guid?>("MusicId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -364,8 +359,6 @@ namespace WebAPI.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("MusicId");
 
                     b.ToTable("MusicCategories");
                 });
@@ -578,25 +571,11 @@ namespace WebAPI.Migrations
                     b.ToTable("movie_category_music_category", (string)null);
                 });
 
-            modelBuilder.Entity("Entity.MovieCategory", b =>
-                {
-                    b.HasOne("Entity.Movie", null)
-                        .WithMany("Categories")
-                        .HasForeignKey("MovieId");
-                });
-
             modelBuilder.Entity("Entity.Music", b =>
                 {
                     b.HasOne("Entity.Playlist", null)
                         .WithMany("Musics")
                         .HasForeignKey("PlaylistId");
-                });
-
-            modelBuilder.Entity("Entity.MusicCategory", b =>
-                {
-                    b.HasOne("Entity.Music", null)
-                        .WithMany("Categories")
-                        .HasForeignKey("MusicId");
                 });
 
             modelBuilder.Entity("Entity.Playlist", b =>
@@ -683,16 +662,6 @@ namespace WebAPI.Migrations
             modelBuilder.Entity("Entity.AppUser", b =>
                 {
                     b.Navigation("FavoritePlaylists");
-                });
-
-            modelBuilder.Entity("Entity.Movie", b =>
-                {
-                    b.Navigation("Categories");
-                });
-
-            modelBuilder.Entity("Entity.Music", b =>
-                {
-                    b.Navigation("Categories");
                 });
 
             modelBuilder.Entity("Entity.Playlist", b =>
