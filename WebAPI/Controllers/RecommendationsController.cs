@@ -9,10 +9,12 @@ namespace WebAPI.Controllers
     public class RecommendationsController : ControllerBase
     {
         private readonly IRecommendationService _recommendationService;
+        private readonly IMovieService _movieService;
 
-        public RecommendationsController(IRecommendationService recommendationService)
+        public RecommendationsController(IRecommendationService recommendationService, IMovieService movieService)
         {
             _recommendationService = recommendationService;
+            _movieService = movieService;
         }
 
         [HttpGet]
@@ -24,7 +26,8 @@ namespace WebAPI.Controllers
                 return BadRequest(result.Messages);
             }
 
-            return Ok(result);
+            var movie = await _movieService.GetMovieByTitleAsync(movieTitle);
+            return Ok( new {result = result,movie = movie.Data});
         }
     }
 }
