@@ -7,6 +7,8 @@ using DTO.AutoMapper.Musics;
 using DTO.AutoMapper.Playlists;
 using DTO.ValidationRules;
 using Entity;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Service;
@@ -51,6 +53,29 @@ namespace WebAPI.Extensions
             }).AddPasswordValidator<PasswordValidator>().AddUserValidator<UserValidator>().
             AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
+
+            // Cookie Configuration for Cross-Site Authentication
+            services.ConfigureApplicationCookie(options =>
+            {
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // HTTPS için zorunlu
+                options.Cookie.SameSite = SameSiteMode.None; // Cross-site için gerekli
+                options.Cookie.Name = "MusicMovieAuth"; // Cookie adı
+                options.ExpireTimeSpan = TimeSpan.FromHours(2);
+                options.SlidingExpiration = true;
+                
+                // API için redirect'leri devre dışı bırak
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    context.Response.StatusCode = 401;
+                    return Task.CompletedTask;
+                };
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    context.Response.StatusCode = 403;
+                    return Task.CompletedTask;
+                };
+            });
 
         }
 
