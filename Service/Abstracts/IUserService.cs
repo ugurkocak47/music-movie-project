@@ -21,7 +21,7 @@ namespace Service.Abstracts
         public Task<IResult> ChangePasswordAsync(ChangeUserPasswordDto userDto);
         public Task<IDataResult<List<ListUserDto>>> GetAllUsersAsync();
 
-        public Task<IDataResult<CurrentUserDto>> GetCurrentUserAsync();
+        public Task<IDataResult<ListUserDto>> GetCurrentUserAsync();
 
         public Task<IDataResult<EditUserDto>> EditUserInformationAsync(EditUserDto userDto);
 
