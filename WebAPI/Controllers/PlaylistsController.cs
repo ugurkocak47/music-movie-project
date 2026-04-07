@@ -87,6 +87,18 @@ namespace WebAPI.Controllers
 
             return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
         }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetPlaylistById(Guid id)
+        {
+            var result = await _playlistService.GetPlaylistById(id);
+            if (!result.Success)
+            {
+                return BadRequest(result.Messages);
+            }
+            return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
+        }
+        
         
     }
 }

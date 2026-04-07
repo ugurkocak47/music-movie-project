@@ -52,6 +52,26 @@ namespace Entity
                         j.HasKey("MovieCategoryId", "MusicCategoryId");
                         j.ToTable("movie_category_music_category");
                     });
+
+            // Configure Playlist relationships
+            modelBuilder.Entity<Playlist>()
+                .HasOne(p => p.Movie)
+                .WithMany()
+                .HasForeignKey(p => p.MovieId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Playlist>()
+                .HasMany(p => p.Musics)
+                .WithMany()
+                .UsingEntity<Dictionary<string, object>>(
+                    "PlaylistMusic",
+                    j => j.HasOne<Music>().WithMany().HasForeignKey("MusicId"),
+                    j => j.HasOne<Playlist>().WithMany().HasForeignKey("PlaylistId"),
+                    j =>
+                    {
+                        j.HasKey("PlaylistId", "MusicId");
+                        j.ToTable("playlist_musics");
+                    });
         }
     }
 }

@@ -301,9 +301,6 @@ namespace WebAPI.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid?>("PlaylistId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("PreviewUrl")
                         .HasColumnType("nvarchar(max)");
 
@@ -321,8 +318,6 @@ namespace WebAPI.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("PlaylistId");
 
                     b.ToTable("Musics");
                 });
@@ -571,11 +566,19 @@ namespace WebAPI.Migrations
                     b.ToTable("movie_category_music_category", (string)null);
                 });
 
-            modelBuilder.Entity("Entity.Music", b =>
+            modelBuilder.Entity("PlaylistMusic", b =>
                 {
-                    b.HasOne("Entity.Playlist", null)
-                        .WithMany("Musics")
-                        .HasForeignKey("PlaylistId");
+                    b.Property<Guid>("PlaylistId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("MusicId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("PlaylistId", "MusicId");
+
+                    b.HasIndex("MusicId");
+
+                    b.ToTable("playlist_musics", (string)null);
                 });
 
             modelBuilder.Entity("Entity.Playlist", b =>
@@ -587,7 +590,7 @@ namespace WebAPI.Migrations
                     b.HasOne("Entity.Movie", "Movie")
                         .WithMany()
                         .HasForeignKey("MovieId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Movie");
@@ -659,14 +662,24 @@ namespace WebAPI.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("PlaylistMusic", b =>
+                {
+                    b.HasOne("Entity.Music", null)
+                        .WithMany()
+                        .HasForeignKey("MusicId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Entity.Playlist", null)
+                        .WithMany()
+                        .HasForeignKey("PlaylistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Entity.AppUser", b =>
                 {
                     b.Navigation("FavoritePlaylists");
-                });
-
-            modelBuilder.Entity("Entity.Playlist", b =>
-                {
-                    b.Navigation("Musics");
                 });
 #pragma warning restore 612, 618
         }

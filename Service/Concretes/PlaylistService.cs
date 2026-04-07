@@ -6,6 +6,7 @@ using DTO.Playlists;
 using DTO.ValidationRules;
 using Entity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Service.Abstracts;
 
 namespace Service.Concretes;
@@ -13,20 +14,64 @@ namespace Service.Concretes;
 public class PlaylistService:IPlaylistService
 {
     public ITBaseService<Playlist, Guid, AppUser, AppDbContext> Current { get; }
+    private readonly ITBaseService<Movie, Guid, AppUser, AppDbContext> _movieService;
+    private readonly ITBaseService<Music, Guid, AppUser, AppDbContext> _musicService;
     private readonly IMapper _mapper;
     private readonly UserManager<AppUser> _userManager;
-    public PlaylistService(ITBaseService<Playlist, Guid, AppUser, AppDbContext> current, IMapper mapper, IUserService userService, UserManager<AppUser> userManager)
+    private readonly AppDbContext _dbContext;
+    
+    public PlaylistService(
+        ITBaseService<Playlist, Guid, AppUser, AppDbContext> current, 
+        ITBaseService<Movie, Guid, AppUser, AppDbContext> movieService,
+        ITBaseService<Music, Guid, AppUser, AppDbContext> musicService,
+        IMapper mapper, 
+        IUserService userService, 
+        UserManager<AppUser> userManager,
+        AppDbContext dbContext)
     {
         Current = current;
+        _movieService = movieService;
+        _musicService = musicService;
         _mapper = mapper;
         _userManager = userManager;
+        _dbContext = dbContext;
     }
 
     [ValidationAspect(typeof(PlaylistValidator))]
     public async Task<IResult> CreatePlaylistAsync(CreatePlaylistDto playlistDto)
     {
-        var playlistMap = _mapper.Map<Playlist>(playlistDto);
-        await Current.AddAsync(playlistMap);
+        // Fetch existing Movie
+        var movie = await _movieService.FirstOrDefaultAsync(m => m.Id == playlistDto.MovieId);
+        if (movie == null)
+        {
+            return new ErrorResult($"Movie with ID {playlistDto.MovieId} not found.");
+        }
+
+        // Fetch existing Musics
+        var musics = new List<Music>();
+        foreach (var musicId in playlistDto.MusicIds)
+        {
+            var music = await _musicService.FirstOrDefaultAsync(m => m.Id == musicId);
+            if (music == null)
+            {
+                return new ErrorResult($"Music with ID {musicId} not found.");
+            }
+            musics.Add(music);
+        }
+
+        // Create Playlist with existing entities
+        var playlist = new Playlist
+        {
+            UserId = playlistDto.UserId,
+            PlaylistName = playlistDto.PlaylistName,
+            Description = playlistDto.Description,
+            MovieId = movie.Id,
+            Movie = movie,
+            Musics = musics,
+            IsPublic = playlistDto.IsPublic
+        };
+
+        await Current.AddAsync(playlist);
         return new SuccessResult("Playlist created successfully.");
     }
     
@@ -39,8 +84,37 @@ public class PlaylistService:IPlaylistService
             return new ErrorResult($"Playlist with ID {playlistDto.Id} not found.");
         }
 
-        var playlistMap = _mapper.Map(playlistDto, playlist);
-        await Current.UpdateAsync(playlistMap);
+        // Update basic properties
+        playlist.PlaylistName = playlistDto.PlaylistName;
+        playlist.Description = playlistDto.Description;
+        playlist.IsPublic = playlistDto.IsPublic;
+
+        // Update Movie if changed
+        if (playlist.MovieId != playlistDto.MovieId)
+        {
+            var movie = await _movieService.FirstOrDefaultAsync(m => m.Id == playlistDto.MovieId);
+            if (movie == null)
+            {
+                return new ErrorResult($"Movie with ID {playlistDto.MovieId} not found.");
+            }
+            playlist.MovieId = movie.Id;
+            playlist.Movie = movie;
+        }
+
+        // Update Musics
+        var musics = new List<Music>();
+        foreach (var musicId in playlistDto.MusicIds)
+        {
+            var music = await _musicService.FirstOrDefaultAsync(m => m.Id == musicId);
+            if (music == null)
+            {
+                return new ErrorResult($"Music with ID {musicId} not found.");
+            }
+            musics.Add(music);
+        }
+        playlist.Musics = musics;
+
+        await Current.UpdateAsync(playlist);
         return new SuccessResult("Playlist updated successfully.");
     }
 
@@ -59,23 +133,34 @@ public class PlaylistService:IPlaylistService
 
     public async Task<IDataResult<List<GetPlaylistDto>>> GetAllPlaylistsAsync(bool getPrivate)
     {
-        var playlists = getPrivate 
-            ? await Current.GetAllListAsync()
-            : await Current.GetAllListAsync(p => p.IsPublic);
+        var playlistsQuery = _dbContext.Playlists
+            .Include(p => p.Movie)
+            .Include(p => p.Musics)
+            .AsQueryable();
 
+        if (!getPrivate)
+        {
+            playlistsQuery = playlistsQuery.Where(p => p.IsPublic);
+        }
+
+        var playlists = await playlistsQuery.ToListAsync();
 
         if (!playlists.Any())
         {
             return new ErrorDataResult<List<GetPlaylistDto>>("No playlists found.");
         }
+        
         var playlistsMap = _mapper.Map<List<GetPlaylistDto>>(playlists);
-
         return new SuccessDataResult<List<GetPlaylistDto>>(playlistsMap, "Playlists returned successfully.");
     }
 
     public async Task<IDataResult<GetPlaylistDto>> GetPlaylistById(Guid id)
     {
-        var playlist = await Current.FirstOrDefaultAsync(p => p.Id == id);
+        var playlist = await _dbContext.Playlists
+            .Include(p => p.Movie)
+            .Include(p => p.Musics)
+            .FirstOrDefaultAsync(p => p.Id == id);
+            
         if (playlist == null)
         {
             return new ErrorDataResult<GetPlaylistDto>($"Playlist with ID {id} not found.");
@@ -87,9 +172,18 @@ public class PlaylistService:IPlaylistService
 
     public async Task<IDataResult<List<GetPlaylistDto>>> GetPlaylistsByUserId(Guid userId, bool getPrivate)
     {
-        var playlists = getPrivate 
-            ? await Current.GetAllListAsync(p=>p.UserId == userId)
-            : await Current.GetAllListAsync(p => p.IsPublic && p.UserId == userId);
+        var playlistsQuery = _dbContext.Playlists
+            .Include(p => p.Movie)
+            .Include(p => p.Musics)
+            .Where(p => p.UserId == userId);
+
+        if (!getPrivate)
+        {
+            playlistsQuery = playlistsQuery.Where(p => p.IsPublic);
+        }
+
+        var playlists = await playlistsQuery.ToListAsync();
+        
         if (!playlists.Any())
         {
             return new ErrorDataResult<List<GetPlaylistDto>>("No playlist found for this user.");
@@ -101,9 +195,18 @@ public class PlaylistService:IPlaylistService
 
     public async Task<IDataResult<List<GetPlaylistDto>>> GetPlaylistsByMovieId(Guid movieId, bool getPrivate)
     {
-        var playlists = getPrivate 
-            ? await Current.GetAllListAsync(p=>p.Movie.Id == movieId)
-            : await Current.GetAllListAsync(p => p.IsPublic && p.Movie.Id == movieId);
+        var playlistsQuery = _dbContext.Playlists
+            .Include(p => p.Movie)
+            .Include(p => p.Musics)
+            .Where(p => p.MovieId == movieId);
+
+        if (!getPrivate)
+        {
+            playlistsQuery = playlistsQuery.Where(p => p.IsPublic);
+        }
+
+        var playlists = await playlistsQuery.ToListAsync();
+        
         if (!playlists.Any())
         {
             return new ErrorDataResult<List<GetPlaylistDto>>("No playlist found for this movie");
@@ -150,15 +253,21 @@ public class PlaylistService:IPlaylistService
             return new ErrorResult("Playlist not found.");
         }
 
-        if (playlist.Movie != playlistDto.Movie)
+        if (playlist.MovieId != playlistDto.MovieId)
         {
             return new ErrorResult("Playlist movies do not match.");
         }
-        foreach (var music in playlistDto.Musics)
+        
+        // Fetch and add new musics
+        foreach (var musicId in playlistDto.MusicIds)
         {
-            if (!playlist.Musics.Any(m=>m.Id == music.Id))
+            if (!playlist.Musics.Any(m => m.Id == musicId))
             {
-                playlist.Musics.Add(music);
+                var music = await _musicService.FirstOrDefaultAsync(m => m.Id == musicId);
+                if (music != null)
+                {
+                    playlist.Musics.Add(music);
+                }
             }
         }
 
