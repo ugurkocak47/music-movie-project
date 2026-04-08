@@ -2,7 +2,9 @@ using AutoMapper;
 using Core.Service;
 using Core.Utilities.Results;
 using DTO.MovieCategories;
+using DTO.Movies;
 using DTO.MusicCategories;
+using DTO.Musics;
 using Entity;
 using Service.Abstracts;
 
@@ -115,5 +117,51 @@ public class CategoryLinkingService:ICategoryLinkingService
         }
 
         return new SuccessDataResult<List<GetMovieCategoryDto>>(categories, "Categories returned successfully.");
+    }
+
+    public async Task<IDataResult<List<GetMovieDto>>> GetMoviesByCategory(Guid categoryId)
+    {
+        var movieLinks = await _movieLinker.GetAllListAsync(m => m.CategoryId == categoryId);
+        if (!movieLinks.Any())
+        {
+            return new ErrorDataResult<List<GetMovieDto>>("No movies avaliable for this category.");
+        }
+        List<GetMovieDto> movies = new List<GetMovieDto>();
+        foreach (var movieLink in movieLinks)
+        {
+            var movie = await _movieService.GetMovieByIdAsync(movieLink.MovieId);
+            if (movies.Exists(m=>m == movie.Data))
+            {
+                continue;
+            }
+            movies.Add(movie.Data);
+        } 
+
+        return new SuccessDataResult<List<GetMovieDto>>(movies, "Movies returned successfully.");
+    }
+
+    public async Task<IDataResult<List<GetMusicDto>>> GetMusicsByCategory(Guid categoryId)
+    {
+        var musicLinks = await _musicLinker.GetAllListAsync(m => m.CategoryId == categoryId);
+        if (!musicLinks.Any())
+        {
+            return new ErrorDataResult<List<GetMusicDto>>("No musics found for this category.");
+        }
+
+        List<GetMusicDto> musics = new List<GetMusicDto>();
+        foreach (var musicLink in musicLinks)
+        {
+            var music = await _musicService.GetMusicByIdAsync(musicLink.MusicId);
+            if (musics.Exists(m=>m == music.Data))
+            {
+                continue;
+            }
+            musics.Add(music.Data);
+        }
+
+        return new SuccessDataResult<List<GetMusicDto>>(musics, "Musics returned successfully.");
+
+
+
     }
 }

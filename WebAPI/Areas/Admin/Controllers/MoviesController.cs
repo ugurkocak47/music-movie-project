@@ -14,10 +14,14 @@ namespace WebAPI.Areas.Admin.Controllers
     public class MoviesController : ControllerBase
     {
         private readonly IMovieService _movieService;
+        private readonly IMovieCategoryService _movieCategoryService;
+        private readonly ICategoryLinkingService _linkingService;
 
-        public MoviesController(IMovieService movieService)
+        public MoviesController(IMovieService movieService, ICategoryLinkingService linkingService, IMovieCategoryService movieCategoryService)
         {
             _movieService = movieService;
+            _linkingService = linkingService;
+            _movieCategoryService = movieCategoryService;
         }
         
         [HttpPost]
@@ -79,6 +83,21 @@ namespace WebAPI.Areas.Admin.Controllers
             }
 
             return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
+        }
+        
+        [Authorize(Roles = "member")]
+        [HttpGet("getmoviesbycategory/{id}")]
+        public async Task<IActionResult> GetMoviesByCategory(Guid id)
+        {
+            var result = await _linkingService.GetMoviesByCategory(id);
+            if (!result.Success)
+            {
+                return BadRequest(result.Messages);
+            }
+
+            var categoryName = await _movieCategoryService.GetMovieCategoryByIdAsync(id);
+
+            return Ok(new { success = result.Success, messages = result.Messages, data = result.Data, category = categoryName.Data.Name });
         }
     }
 }

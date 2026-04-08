@@ -14,10 +14,14 @@ namespace WebAPI.Areas.Admin.Controllers
     public class MusicsController : ControllerBase
     {
         private readonly IMusicService _musicService;
+        private readonly ICategoryLinkingService _linkingService;
+        private readonly IMusicCategoryService _categoryService;
 
-        public MusicsController(IMusicService musicService)
+        public MusicsController(IMusicService musicService, ICategoryLinkingService linkingService, IMusicCategoryService categoryService)
         {
             _musicService = musicService;
+            _linkingService = linkingService;
+            _categoryService = categoryService;
         }
 
         [HttpPost]
@@ -78,6 +82,20 @@ namespace WebAPI.Areas.Admin.Controllers
             }
 
             return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
+        }
+
+        [Authorize(Roles = "member")]
+        [HttpGet("getmusicsbycategory/{id}")]
+        public async Task<IActionResult> GetMusicsByCategory(Guid id)
+        {
+            var result = await _linkingService.GetMusicsByCategory(id);
+            if (!result.Success)
+            {
+                return BadRequest(result.Messages);
+            }
+
+            var categoryName = await _categoryService.GetMusicCategoryByIdAsync(id);
+            return Ok(new { success = result.Success, messages = result.Messages, data = result.Data, category=categoryName.Data.Name });
         }
     }
 }

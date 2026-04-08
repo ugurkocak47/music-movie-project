@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using AutoMapper;
 using Core.Aspects.Autofac.Validation;
 using Core.Service;
@@ -273,5 +274,23 @@ public class PlaylistService:IPlaylistService
 
         await Current.UpdateAsync(playlist);
         return new SuccessResult("Added musics to playlist successfully.");
+    }
+
+    public async Task<IDataResult<List<GetPlaylistDto>>> GetRecentPlaylists(int count, bool getPrivate)
+    {
+        
+        var playlists =  (await Current.GetAllListAsync(m=>getPrivate ? m==m : m.IsPublic==true )).OrderByDescending(m => m.CreatedDate).Take(count);
+        if (!playlists.Any())
+        {
+            return new ErrorDataResult<List<GetPlaylistDto>>("No playlists found.");
+        }
+
+        var playlistsMap = _mapper.Map<List<GetPlaylistDto>>(playlists);
+        return new SuccessDataResult<List<GetPlaylistDto>>(playlistsMap, "Recent playlists returned successfully.");
+    }
+    
+    private static Expression<Func<Playlist, bool>> GetPrivacyFilter(bool getPrivate)
+    {
+        return getPrivate ? p => true : p => p.IsPublic;
     }
 }

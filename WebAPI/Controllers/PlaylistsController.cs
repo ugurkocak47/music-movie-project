@@ -98,6 +98,17 @@ namespace WebAPI.Controllers
             }
             return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
         }
+
+        [HttpGet("getrecent")]
+        public async Task<IActionResult> GetRecentPlaylists(int count, bool getPrivate)
+        {
+            var result = await _playlistService.GetRecentPlaylists(count, getPrivate);
+            if (!result.Success)
+            {
+                return BadRequest(result.Messages);
+            }
+            return Ok(new { success = result.Success, messages = result.Messages, data = result.Data });
+        }
         
         
     }
