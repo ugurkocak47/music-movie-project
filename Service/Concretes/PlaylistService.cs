@@ -3,6 +3,8 @@ using AutoMapper;
 using Core.Aspects.Autofac.Validation;
 using Core.Service;
 using Core.Utilities.Results;
+using DTO.Movies;
+using DTO.Musics;
 using DTO.Playlists;
 using DTO.ValidationRules;
 using Entity;
@@ -278,19 +280,51 @@ public class PlaylistService:IPlaylistService
 
     public async Task<IDataResult<List<GetPlaylistDto>>> GetRecentPlaylists(int count, bool getPrivate)
     {
-        
-        var playlists =  (await Current.GetAllListAsync(m=>getPrivate ? m==m : m.IsPublic==true )).OrderByDescending(m => m.CreatedDate).Take(count);
+        var playlistsQuery = _dbContext.Playlists
+            .Include(p => p.Movie)
+            .Include(p => p.Musics)
+            .AsQueryable();
+
+        if (!getPrivate)
+        {
+            playlistsQuery = playlistsQuery.Where(p => p.IsPublic);
+        }
+
+        var playlists = await playlistsQuery
+            .OrderByDescending(p => p.CreatedDate)
+            .Take(count)
+            .ToListAsync();
+
         if (!playlists.Any())
         {
             return new ErrorDataResult<List<GetPlaylistDto>>("No playlists found.");
         }
 
-        var playlistsMap = _mapper.Map<List<GetPlaylistDto>>(playlists);
-        return new SuccessDataResult<List<GetPlaylistDto>>(playlistsMap, "Recent playlists returned successfully.");
+        var playlistMaps = new List<GetPlaylistDto>();
+        foreach (var playlist in playlists)
+        {
+            var playlistMap = _mapper.Map<GetPlaylistDto>(playlist);
+            playlistMap.Movie = _mapper.Map<GetMovieDto>(playlist.Movie);
+            playlistMap.Musics = _mapper.Map<List<GetMusicDto>>(playlist.Musics);
+            playlistMaps.Add(playlistMap);
+        }
+        return new SuccessDataResult<List<GetPlaylistDto>>(playlistMaps, "Recent playlists returned successfully.");
     }
     
     private static Expression<Func<Playlist, bool>> GetPrivacyFilter(bool getPrivate)
     {
         return getPrivate ? p => true : p => p.IsPublic;
+    }
+
+    private List<GetMusicDto> GetPlaylistMusics(Guid id)
+    {
+        var playlist = _dbContext.Playlists
+            .Include(p => p.Musics)
+            .FirstOrDefault(p => p.Id == id);
+        
+        if (playlist == null)
+            return new List<GetMusicDto>();
+        
+        return _mapper.Map<List<GetMusicDto>>(playlist.Musics);
     }
 }
